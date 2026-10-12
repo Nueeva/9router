@@ -321,6 +321,29 @@ function buildCliPackage() {
     console.log("⏭️  No updater files found\n");
   }
 
+  // Step 7c: Copy scripts/ and src/ for custom-server auth guard
+  console.log("7️⃣ c Copying auth guard scripts and source dependencies...");
+  const scriptsSrc = path.join(appDir, "scripts");
+  const scriptsDest = path.join(cliAppDir, "scripts");
+  if (fs.existsSync(scriptsSrc)) {
+    copyRecursive(scriptsSrc, scriptsDest);
+    console.log("✅ Copied scripts/");
+  }
+  const appSrcDir = path.join(appDir, "src");
+  const cliSrcDir = path.join(cliAppDir, "src");
+  if (fs.existsSync(appSrcDir)) {
+    copyRecursive(appSrcDir, cliSrcDir);
+    console.log("✅ Copied src/ tree");
+  }
+  const nextServerSrc = path.join(appDir, "node_modules", "next", "server.js");
+  const nextServerDest = path.join(cliAppDir, "node_modules", "next", "server.js");
+  if (fs.existsSync(nextServerSrc) && !fs.existsSync(nextServerDest)) {
+    fs.mkdirSync(path.dirname(nextServerDest), { recursive: true });
+    fs.copyFileSync(nextServerSrc, nextServerDest);
+    console.log("✅ Copied next/server.js");
+  }
+  console.log("");
+
   // Step 8: Build MITM server (config driven - see app/cli/scripts/buildMitm.js)
   console.log("8️⃣  Building MITM server...");
   try {
