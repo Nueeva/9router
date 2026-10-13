@@ -1,3 +1,8 @@
+# v0.5.172 (2026-10-13) · 1 commit
+
+## Refactor / UX
+- **Task UI / Notifications**: remove floating full-screen LongTaskBanner/ProgressCard overlays and TaskDock completely. Long-running background operations now report live progress directly inside the NotificationBell dropdown menu under "Running in background" with live progress bars and badge counters -Custom
+
 # v0.5.171 (2026-10-13) · 2 commits
 
 ## Fixes
