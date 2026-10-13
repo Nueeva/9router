@@ -1477,13 +1477,7 @@ const scopedModelPatterns =
                       </span>
                     )}
                   </div>
-                  {key.isActive === false && (
-                    <div className="flex flex-wrap items-center gap-1.5 mt-2">
-                      <span className="text-xs max-w-full truncate px-2 py-0.5 rounded bg-orange-500/10 text-orange-500 font-semibold">
-                        Key switched off
-                      </span>
-                    </div>
-                  )}
+
                   <KeyAccessControls
                     apiKey={key}
                     onChange={(access) => handleUpdateKeyAccess(key.id, access)}

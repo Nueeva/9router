@@ -1,3 +1,8 @@
+# v0.5.168 (2026-10-13) · 1 commit
+
+## Fixes
+- **Dashboard**: remove "Key switched off" badge for disabled keys -Custom
+
 # v0.5.167 (2026-10-13) · 15 commits
 
 ## Features
