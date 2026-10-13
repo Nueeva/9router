@@ -1,4 +1,4 @@
-# v0.5.167 (2026-10-13) · 8 commits
+# v0.5.167 (2026-10-13) · 15 commits
 
 ## Features
 - **Models**: refresh Antigravity catalog with Gemini 3.8 and add Claude Sonnet 5.5 and Opus 5.5 support with reasoning effort variants
@@ -11,6 +11,8 @@
 ## Fixes
 - **OpenCode**: encode inverted timestamp in translated session IDs (#4782) -Custom
 - **Registry**: resolve missing imports for minimax-code and bedrock in provider registry -Custom
+- **Models**: define pluginMarks in studio models loop -Custom
+- **CLI Tools**: remove duplicate upsertEnvVar in hermes-settings route -Custom
 
 # v0.5.166 (2026-10-12) · 1 commit
 
