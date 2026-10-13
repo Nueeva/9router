@@ -67,13 +67,6 @@ const readTextFile = async (file) => {
 const readConfigYaml = (home) => readTextFile(home.configPath);
 const readEnvFile = (home) => readTextFile(home.envPath);
 
-// .env helpers - upsert/remove single KEY=VALUE line
-const upsertEnvVar = (envText, key, value) => {
-  const re = new RegExp(`^${key}=.*$`, "m");
-  const line = `${key}=${value}`;
-  if (re.test(envText)) return envText.replace(re, line);
-  return envText.length > 0 && !envText.endsWith("\n") ? `${envText}\n${line}\n` : `${envText}${line}\n`;
-};
 
 // Only ever upserts the OPENAI_API_KEY line — per-profile .env files also carry bot tokens
 // and messaging-channel credentials that must stay untouched.
