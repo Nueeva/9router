@@ -1,3 +1,17 @@
+# v0.5.167 (2026-10-13) · 8 commits
+
+## Features
+- **Models**: refresh Antigravity catalog with Gemini 3.8 and add Claude Sonnet 5.5 and Opus 5.5 support with reasoning effort variants
+- **Providers**: add Amazon Bedrock (bedrock and bedrock-xai) provider with AWS SSO profiles, native SigV4 signer, and shared EventStream decoder (#4157)
+- **Hermes**: per-profile configuration across API, Dashboard card, and CLI menu with bulk apply, scoped reset, and auxiliary roles (#4660)
+- **API Keys**: per-API-key access control: restrict a key to selected combos and models -Custom
+- **Proxy Pools**: add Netlify relay proxy pool
+- **Models**: add ElevenLabs Scribe speech-to-text support (#4537)
+
+## Fixes
+- **OpenCode**: encode inverted timestamp in translated session IDs (#4782) -Custom
+- **Registry**: resolve missing imports for minimax-code and bedrock in provider registry -Custom
+
 # v0.5.166 (2026-10-12) · 1 commit
 
 ## Features
