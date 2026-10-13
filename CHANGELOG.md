@@ -1,3 +1,8 @@
+# v0.5.171 (2026-10-13) · 2 commits
+
+## Fixes
+- **Build / Docker**: add `@aws-sdk/credential-providers` to `optionalDependencies` and `serverComponentsExternalPackages` with `webpackIgnore: true` dynamic import guard to fix Next.js 14 Docker compilation failure -Custom
+
 # v0.5.170 (2026-10-13) · 2 commits
 
 ## Features

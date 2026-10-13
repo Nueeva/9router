@@ -70,7 +70,7 @@ const nextConfig = {
     },
     // Next 14 reads this key (top-level serverExternalPackages is Next 15+ and
     // ignored with a warning). Keep both so the db adapters stay external.
-    serverComponentsExternalPackages: ["better-sqlite3", "sql.js", "node:sqlite", "bun:sqlite", "open"],
+    serverComponentsExternalPackages: ["better-sqlite3", "sql.js", "node:sqlite", "bun:sqlite", "open", "@aws-sdk/credential-providers"],
     // #1529/#1572: LLM clients can send long context or base64 image payloads through /v1 rewrites.
     proxyClientMaxBodySize,
     // Cache fetch responses across HMR refreshes for faster dev reloads.

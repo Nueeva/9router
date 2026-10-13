@@ -140,7 +140,11 @@ export class BaseExecutor {
       const mergedSignal = signal ? AbortSignal.any([signal, connectCtrl.signal]) : connectCtrl.signal;
 
       try {
-        const bodyStr = JSON.stringify(transformedBody);
+        if (this.provider === "opencode") {
+  console.log("DEBUG_OPENCODE_REQ_HEADERS:", JSON.stringify(headers));
+  console.log("DEBUG_OPENCODE_REQ_BODY:", JSON.stringify(transformedBody));
+}
+const bodyStr = JSON.stringify(transformedBody);
         const fetchT0 = Date.now();
         dbg("FETCH", `${this.provider.toUpperCase()} → ${url} | body=${bodyStr.length}B | connectTimeout=${timeoutMs}ms`);
         const response = await proxyAwareFetch(url, {
