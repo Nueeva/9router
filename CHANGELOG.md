@@ -1,3 +1,8 @@
+# v0.5.173 (2026-10-13) · 2 commits
+
+## Fixes
+- **Proxy Pools & Modals**: clean up unused ProgressCard JSX references and imports across all dashboard pages to prevent hydration and client-side exceptions -Custom
+
 # v0.5.172 (2026-10-13) · 1 commit
 
 ## Refactor / UX

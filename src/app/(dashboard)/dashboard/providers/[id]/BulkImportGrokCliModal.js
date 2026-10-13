@@ -2,7 +2,7 @@
 
 import { useState, useRef } from "react";
 import PropTypes from "prop-types";
-import { Modal, Button, ProgressCard } from "@/shared/components";
+import { Modal, Button } from "@/shared/components";
 import { translate } from "@/i18n/runtime";
 
 // Server-side bulk insert runs serially, so very large payloads are split

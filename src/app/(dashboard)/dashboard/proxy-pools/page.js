@@ -1,7 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useState, useRef } from "react";
-import { Badge, Button, Card, CardSkeleton, Input, Modal, Pagination, ProgressCard, Toggle, ConfirmModal } from "@/shared/components";
+import { Badge, Button, Card, CardSkeleton, Input, Modal, Pagination,  Toggle, ConfirmModal } from "@/shared/components";
 import { useNotificationStore } from "@/store/notificationStore";
 import { useTaskStore } from "@/store/taskStore";
 import {
@@ -1152,12 +1152,7 @@ export default function ProxyPoolsPage() {
         )}
       </Card>
 
-      {deploying && (
-        <ProgressCard
-          title={deployLabel || "Deploying relay"}
-          message="Pushing worker build to the edge, this can take about a minute"
-        />
-      )}
+
 
       <Modal
         isOpen={showBatchImportModal}
