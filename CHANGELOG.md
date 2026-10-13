@@ -1,3 +1,11 @@
+# v0.5.169 (2026-10-13) · 2 commits
+
+## Features
+- **OpenCode Free**: adopt exact bash script formula `((~(timestamp_ms * 4096 + counter)) & 281474976710655)` for 12-hex inverted timestamp session header generation (`x-opencode-session`) across OpenCode Free and Zen executors -Custom
+
+## Fixes
+- **Dashboard**: remove "Key switched off" badge from disabled/paused API key cards -Custom
+
 # v0.5.168 (2026-10-13) · 1 commit
 
 ## Fixes
