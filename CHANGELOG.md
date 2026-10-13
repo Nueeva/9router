@@ -1,3 +1,11 @@
+# v0.5.170 (2026-10-13) · 2 commits
+
+## Features
+- **OpenCode Free & Zen**: integrate exact bash formula `((~(timestamp_ms * 4096 + counter)) & 281474976710655)` directly into `generateSessionId()` for precise 12-hex inverted timestamp session header generation -Custom
+
+## Fixes
+- **OpenCode**: ensure robust fallback header generation for missing session credentials in executor buildHeaders -Custom
+
 # v0.5.169 (2026-10-13) · 2 commits
 
 ## Features

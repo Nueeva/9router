@@ -40,15 +40,25 @@ function unstableRandom() {
   return randomPart;
 }
 
+let lastZenTimestamp = 0;
+let zenCounter = 0;
+
 export function generateSessionId(timestamp = Date.now()) {
-  const current = BigInt(timestamp) * 0x1000n + 1n;
-  const value = ~current;
-  const time = Array.from({ length: 6 }, (_, index) =>
-    Number((value >> BigInt(40 - 8 * index)) & 0xffn)
-      .toString(16)
-      .padStart(2, "0")
-  ).join("");
-  return `ses_${time}${unstableRandom()}`;
+  if (timestamp !== lastZenTimestamp) {
+    lastZenTimestamp = timestamp;
+    zenCounter = 0;
+  }
+  zenCounter++;
+
+  // Exact bash formula:
+  // 12 hexadecimal characters: timestamp + counter, descending
+  // $(( (~(timestamp_ms * 4096 + counter)) & 281474976710655 ))
+  const timestamp_ms = BigInt(timestamp);
+  const time_val = (~(timestamp_ms * 4096n + BigInt(zenCounter))) & 281474976710655n;
+  const time_part = time_val.toString(16).padStart(12, "0");
+  const random_part = unstableRandom();
+
+  return `ses_${time_part}${random_part}`;
 }
 
 export function generateRequestId(timestamp = Date.now()) {
@@ -291,7 +301,7 @@ export class OpenCodeZenExecutor extends DefaultExecutor {
     }
 
     const fallback = this.prepareRequestCredentials({ credentials });
-    headers[SESSION_HEADER] = fallback[SESSION_FIELD];
+    headers[SESSION_HEADER] = fallback[SESSION_FIELD] || generateSessionId();
     return headers;
   }
 

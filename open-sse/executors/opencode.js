@@ -56,14 +56,15 @@ export function generateSessionId(timestamp = Date.now()) {
   }
   counter++;
 
-  const current = BigInt(timestamp) * 0x1000n + BigInt(counter);
-  const value = ~current;
-  const time = Array.from({ length: 6 }, (_, index) =>
-    Number((value >> BigInt(40 - 8 * index)) & 0xffn)
-      .toString(16)
-      .padStart(2, "0")
-  ).join("");
-  return `ses_${time}${unstableRandom()}`;
+  // Exact bash formula:
+  // 12 hexadecimal characters: timestamp + counter, descending
+  // $(( (~(timestamp_ms * 4096 + counter)) & 281474976710655 ))
+  const timestamp_ms = BigInt(timestamp);
+  const time_val = (~(timestamp_ms * 4096n + BigInt(counter))) & 281474976710655n;
+  const time_part = time_val.toString(16).padStart(12, "0");
+  const random_part = unstableRandom();
+
+  return `ses_${time_part}${random_part}`;
 }
 
 export function generateRequestId(timestamp = Date.now()) {
@@ -477,7 +478,7 @@ export class OpenCodeExecutor extends BaseExecutor {
     const isOpencodeDownstream = hasValidOpencodeVersion(downstreamUa);
     const auth = credentials?.apiKey ? `Bearer ${credentials.apiKey}` : "Bearer public";
 
-    const session = credentials?.[SESSION_FIELD] || this.prepareRequestCredentials({ credentials })[SESSION_FIELD];
+    const session = credentials?.[SESSION_FIELD] || this.prepareRequestCredentials({ credentials })[SESSION_FIELD] || generateSessionId();
     const downstreamReq = normalizeRequestId(lower["x-opencode-request"]);
     const requestId = credentials?.[REQ_FIELD] || downstreamReq || generateRequestId();
 
