@@ -114,6 +114,8 @@ import p113 from "./tinyfish.js";
 import p114 from "./together.js";
 import p115 from "./tokenharbor.js";
 import p116 from "./tokenrouter.js";
+
+
 import p117 from "./topaz.js";
 import p118 from "./tortoise.js";
 import p119 from "./trae.js";
@@ -131,11 +133,22 @@ import p130 from "./xiaomi-tokenplan.js";
 import p131 from "./xquik.js";
 import p132 from "./youcom.js";
 import p133 from "./zed.js";
-import p134 from "./minimax-code.js";
-import p135 from "./minimax-code-global.js";
-import p136 from "./bedrock.js";
-import p137 from "./bedrock-xai.js";
-
+import p134 from "./selfhosted-stt.js";
+import p135 from "./selfhosted-tts.js";
+import p136 from "./selfhosted-embedding.js";
+import p137 from "./fish-audio.js";
+import p138 from "./alitp-intl.js";
+import p139 from "./tokenharbor.js";
+import p140 from "./dahl.js";
+import p141 from "./atria.js";
+import p142 from "./agnes.js";
+import p143 from "./bai.js";
+import p144 from "./tinyfish.js";
+import p145 from "./muse.js";
+import p146 from "./minimax-code.js";
+import p147 from "./minimax-code-global.js";
+import p148 from "./bedrock.js";
+import p149 from "./bedrock-xai.js";
 export default [
   p0,
   p1,
@@ -269,4 +282,20 @@ export default [
   p131,
   p132,
   p133,
+  p134,
+  p135,
+  p136,
+  p137,
+  p138,
+  p139,
+  p140,
+  p141,
+  p142,
+  p143,
+  p144,
+  p145,
+  p146,
+  p147,
+  p148,
+  p149,
 ];

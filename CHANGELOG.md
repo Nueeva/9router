@@ -10,6 +10,51 @@
 - **OpenCode Free & Zen**: implement PR #4782 session translation cache & inverted timestamp generator (`translateSessionId`) across both `opencode.js` and `opencode-zen.js` to ensure generated sessions carry valid descending timestamp headers and prevent 403 FreeTierError -Custom
 
 # v0.5.167 (2026-10-14) · 1 commit
+# v0.5.172 (2026-10-14) · 1 commit
+
+## What Was Deleted?
+- **Endpoint page**: the orange "Paused" label under a switched-off API key is gone - the toggle still shows the off state and the row still dims, without the extra text -Custom
+
+# v0.5.171 (2026-10-14) · 25 commits
+
+## What's Added?
+- **Amazon Bedrock provider**: new provider with AWS SigV4 request signing, static API keys, and AWS SSO (IAM Identity Center) credential profiles. Ships with a second variant for xAI models hosted on Bedrock -Custom
+- **Hermes per-profile configuration**: Hermes model config can now be stored per profile instead of one global YAML, with bulk apply and reset from the dashboard
+- **Netlify Relay for Proxy Pools**: Proxy Pools can deploy a relay straight to Netlify from the dashboard, including a dedicated modal for entering site credentials
+- **MiniMax Code (`mcode`)**: new provider entry with its credit-based quota surfaced in the dashboard
+- **System One endpoint (`clef-flash`)**: new Cloudflare-backed system endpoint
+- **9Remote sidebar item**: the sidebar entry now opens 9Remote directly in a new tab
+- **CLI `show` and `--save`**: the CLI can display current settings and persist interactive answers; `connect` can now be issued from the server side
+- **ElevenLabs Scribe STT**: new speech-to-text model entry alongside the existing text-to-speech catalog
+- **Claude Sonnet 5.5 and Opus 5.5** on Antigravity, with reasoning effort support on Claude tool cards
+- **Antigravity catalog refresh**: Gemini 3.8 Flash, 3.6 Flash, and 3.1 Pro High added to the model list
+- **Self-hosted TTS**: custom model and voice support for self-hosted text-to-speech endpoints
+
+## What Was Fixed?
+- **Gemini translator**: a tool parameter literally named `properties` is no longer mistaken for a schema node, which was causing 400 errors from Google Vertex and Gemini with MCP tools
+- **Gemini translator**: `functionResponse` payloads rename `$ref` instead of forwarding it, and tool properties travel as `properties` rather than a raw schema
+- **Translator**: duplicate `tool_call_ids` are collapsed so a single tool result is not replayed twice
+- **Capabilities**: GLM-5.3 now reports thinking support, and GLM-5.2 / GLM-5.3 context windows corrected to 1M tokens
+- **Combos**: compatible node models are shown in the picker even when the combo has no active connection
+- **Kimi**: the client is routed to the native Responses endpoint instead of chat completions
+- **Cursor**: reasoning effort is forwarded, and empty turns are rejected rather than sent upstream
+- **Codex**: strict mode flag is honoured and image tokens are counted correctly
+- **Ollama**: `prompt_eval_cached_count` is read, so cached prompt tokens are not billed twice
+- **Muse**: the transport is now Responses-only, matching what the provider actually accepts
+- **TTS**: self-hosted model and voice names are no longer mangled
+- **CLI**: Pi and Oh My Pi hosts are supported alongside the existing targets
+
+## What Looks Different?
+- **Mobile endpoint layout**: the API key list card reflows on narrow screens - the row uses `items-start`, the meta line wraps, long keys break instead of overflowing, and the action buttons keep a shrink-safe wrapper
+- **Mobile provider models and cli-tools**: both pages get the same narrow-screen treatment
+- **Mobile settings (Claude CLI)**: settings rows no longer clip on phone widths
+
+## What's Under The Hood?
+- **Provider registry**: Bedrock and Bedrock-xai registered as slots `p148` and `p149`, with the slot array kept in sync with the files actually present on disk
+- **Hermes YAML**: profile and YAML helpers moved into dedicated modules, so the settings route no longer carries the parser inline
+- **AWS credential resolution**: `@aws-sdk/credential-providers` added as an optional dependency, with the import guarded so bundling does not fail when the optional package is absent
+- **Porting scope**: 28 upstream v0.5.99 commits ported, 1 deliberately skipped (`d8c585fb`, per-API-key access control) and 2 resolved as no-ops because the fork already carries an equal or better implementation
+
 # v0.5.170 (2026-10-14) · 1 commit
 
 ## What Looks Different?

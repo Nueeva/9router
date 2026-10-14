@@ -28,6 +28,7 @@ import TraeExecutor from "./trae.js";
 import ZedExecutor from "./zed.js";
 import WindsurfExecutor from "./windsurf.js";
 import { DefaultExecutor } from "./default.js";
+import { MinimaxCodeExecutor } from "./minimax-code.js";
 import { DevinCliExecutor } from "./devin-cli.js";
 
 const executors = {
@@ -73,6 +74,8 @@ const executors = {
   trae: new TraeExecutor(),
   zed: new ZedExecutor(),
   windsurf: new WindsurfExecutor(),
+  "minimax-code": new MinimaxCodeExecutor("minimax-code"),
+  "minimax-code-global": new MinimaxCodeExecutor("minimax-code-global"),
   "devin-cli": new DevinCliExecutor(),
   bedrock: new BedrockExecutor(),
   br: new BedrockExecutor(), // Alias for bedrock

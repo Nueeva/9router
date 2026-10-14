@@ -239,7 +239,7 @@ export async function resolveAwsCredentials(
     // The specifier MUST stay a literal. With a variable here, Next's output tracing cannot
     // see the dependency, so @aws-sdk/credential-providers is left out of the standalone
     // build and profile/SSO mode dies with MODULE_NOT_FOUND only in the packaged CLI.
-    loadCredentialProviders = () => import(/* webpackIgnore: true */ "@aws-sdk/credential-providers"),
+    loadCredentialProviders = () => import("@aws-sdk/credential-providers"),
     now = () => Date.now(),
     resolveTimeoutMs = AWS_CREDENTIAL_RESOLVE_TIMEOUT_MS,
   } = {},

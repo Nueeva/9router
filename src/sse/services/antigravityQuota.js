@@ -290,6 +290,11 @@ export async function handleAntigravityQuotaError(connectionId, status, model, a
   const resetMs = new Date(quota.resetAt).getTime();
   if (resetMs <= Date.now()) return null;
 
-  log.warn("AG_QUOTA", `${connectionId.slice(0, 8)} | UPSTREAM_${status} ${model} - quota exhausted; CACHE_BLOCK until ${quota.resetAt}`);
+  // Cache-block the requested model under its model name
+  const cached = quotaCache.get(connectionId) || {};
+  cached[model] = { remainingPercentage: 0, resetAt: quota.resetAt };
+  quotaCache.set(connectionId, cached);
+
+  log.warn("AG_QUOTA", `${connectionId.slice(0, 8)} | UPSTREAM_${status} ${model} — quota exhausted; CACHE_BLOCK until ${quota.resetAt}`);
   return resetMs;
 }
