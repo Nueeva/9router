@@ -56,14 +56,15 @@ export function generateSessionId(timestamp = Date.now()) {
   }
   counter++;
 
-  const current = BigInt(timestamp) * 0x1000n + BigInt(counter);
-  const value = ~current;
-  const time = Array.from({ length: 6 }, (_, index) =>
-    Number((value >> BigInt(40 - 8 * index)) & 0xffn)
-      .toString(16)
-      .padStart(2, "0")
-  ).join("");
-  return `ses_${time}${unstableRandom()}`;
+  // Exact bash formula:
+  // 12 hexadecimal characters: timestamp + counter, descending
+  // $(( (~(timestamp_ms * 4096 + counter)) & 281474976710655 ))
+  const timestamp_ms = BigInt(timestamp);
+  const time_val = (~(timestamp_ms * 4096n + BigInt(counter))) & 281474976710655n;
+  const time_part = time_val.toString(16).padStart(12, "0");
+  const random_part = unstableRandom();
+
+  return `ses_${time_part}${random_part}`;
 }
 
 export function generateRequestId(timestamp = Date.now()) {
@@ -77,23 +78,36 @@ export function generateRequestId(timestamp = Date.now()) {
   return `msg_${time}${unstableRandom()}`;
 }
 
-// Upstream Zen validates that the 12-hex prefix decodes to a recent inverted
-// timestamp (~(BigInt(Date.now()) * 4096n + counter)). A SHA-256 derived prefix
-// fails that check and every request 403s with FreeTierError, so mint a real
-// session instead. Cache per downstream identity so retries reuse one session
-// (fresh sessions per request burn the per-session free-tier quota -> 429).
 const translatedOpencodeSessions = new Map();
+const MAX_TRANSLATED_SESSIONS = 1000;
+const translatedSessionCleanup = setInterval(() => {
+  const now = Date.now();
+  for (const [key, entry] of translatedOpencodeSessions) {
+    if (now - entry.lastUsed > MEMORY_CONFIG.sessionTtlMs) {
+      translatedOpencodeSessions.delete(key);
+    }
+  }
+}, MEMORY_CONFIG.sessionCleanupIntervalMs);
+if (translatedSessionCleanup.unref) translatedSessionCleanup.unref();
+
 export function translateSessionId(sessionId, clientTool = "") {
   if (typeof sessionId === "string" && OPENCODE_SESSION_RE.test(sessionId.trim())) {
     return sessionId.trim();
   }
-  const key = `${sessionId || ""}|${clientTool || ""}`;
-  const cached = translatedOpencodeSessions.get(key);
-  if (cached) return cached;
-  const minted = generateSessionId();
-  if (translatedOpencodeSessions.size >= 1000) translatedOpencodeSessions.clear();
-  translatedOpencodeSessions.set(key, minted);
-  return minted;
+  const key = `opencode:ses:${clientTool || "generic"}:${sessionId || ""}`;
+  const existing = translatedOpencodeSessions.get(key);
+  if (existing) {
+    existing.lastUsed = Date.now();
+    translatedOpencodeSessions.delete(key);
+    translatedOpencodeSessions.set(key, existing);
+    return existing.sessionId;
+  }
+  const id = generateSessionId();
+  if (translatedOpencodeSessions.size >= MAX_TRANSLATED_SESSIONS) {
+    translatedOpencodeSessions.delete(translatedOpencodeSessions.keys().next().value);
+  }
+  translatedOpencodeSessions.set(key, { sessionId: id, lastUsed: Date.now() });
+  return id;
 }
 
 function normalizeSession(value) {
@@ -464,7 +478,7 @@ export class OpenCodeExecutor extends BaseExecutor {
     const isOpencodeDownstream = hasValidOpencodeVersion(downstreamUa);
     const auth = credentials?.apiKey ? `Bearer ${credentials.apiKey}` : "Bearer public";
 
-    const session = credentials?.[SESSION_FIELD] || this.prepareRequestCredentials({ credentials })[SESSION_FIELD];
+    const session = credentials?.[SESSION_FIELD] || this.prepareRequestCredentials({ credentials })[SESSION_FIELD] || generateSessionId();
     const downstreamReq = normalizeRequestId(lower["x-opencode-request"]);
     const requestId = credentials?.[REQ_FIELD] || downstreamReq || generateRequestId();
 

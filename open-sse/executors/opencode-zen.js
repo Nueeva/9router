@@ -8,6 +8,7 @@ import {
   coerceResponsesArguments,
   coerceResponsesOutput,
 } from "../translator/formats/responsesApi.js";
+import { MEMORY_CONFIG } from "../config/runtimeConfig.js";
 
 const SESSION_HEADER = "x-opencode-session";
 const SESSION_FIELD = "_opencodeZenSession";
@@ -39,15 +40,25 @@ function unstableRandom() {
   return randomPart;
 }
 
+let lastZenTimestamp = 0;
+let zenCounter = 0;
+
 export function generateSessionId(timestamp = Date.now()) {
-  const current = BigInt(timestamp) * 0x1000n + 1n;
-  const value = ~current;
-  const time = Array.from({ length: 6 }, (_, index) =>
-    Number((value >> BigInt(40 - 8 * index)) & 0xffn)
-      .toString(16)
-      .padStart(2, "0")
-  ).join("");
-  return `ses_${time}${unstableRandom()}`;
+  if (timestamp !== lastZenTimestamp) {
+    lastZenTimestamp = timestamp;
+    zenCounter = 0;
+  }
+  zenCounter++;
+
+  // Exact bash formula:
+  // 12 hexadecimal characters: timestamp + counter, descending
+  // $(( (~(timestamp_ms * 4096 + counter)) & 281474976710655 ))
+  const timestamp_ms = BigInt(timestamp);
+  const time_val = (~(timestamp_ms * 4096n + BigInt(zenCounter))) & 281474976710655n;
+  const time_part = time_val.toString(16).padStart(12, "0");
+  const random_part = unstableRandom();
+
+  return `ses_${time_part}${random_part}`;
 }
 
 export function generateRequestId(timestamp = Date.now()) {
@@ -61,22 +72,36 @@ export function generateRequestId(timestamp = Date.now()) {
   return `msg_${time}${unstableRandom()}`;
 }
 
-// Upstream Zen validates the 12-hex prefix as a recent inverted timestamp
-// (~(BigInt(Date.now()) * 4096n + counter)); a SHA-256 derived prefix 403s with
-// FreeTierError. Mint a real session and reuse it per identity so retries don't
-// burn the per-session free-tier quota.
 const translatedZenSessions = new Map();
+const MAX_TRANSLATED_SESSIONS = 1000;
+const translatedZenSessionCleanup = setInterval(() => {
+  const now = Date.now();
+  for (const [key, entry] of translatedZenSessions) {
+    if (now - entry.lastUsed > (MEMORY_CONFIG?.sessionTtlMs || 1800000)) {
+      translatedZenSessions.delete(key);
+    }
+  }
+}, MEMORY_CONFIG?.sessionCleanupIntervalMs || 300000);
+if (translatedZenSessionCleanup.unref) translatedZenSessionCleanup.unref();
+
 export function translateSessionId(sessionId, clientTool = "") {
   if (typeof sessionId === "string" && OPENCODE_SESSION_RE.test(sessionId.trim())) {
     return sessionId.trim();
   }
-  const key = `${sessionId || ""}|${clientTool || ""}`;
-  const cached = translatedZenSessions.get(key);
-  if (cached) return cached;
-  const minted = generateSessionId();
-  if (translatedZenSessions.size >= 1000) translatedZenSessions.clear();
-  translatedZenSessions.set(key, minted);
-  return minted;
+  const key = `opencode-zen:ses:${clientTool || "generic"}:${sessionId || ""}`;
+  const existing = translatedZenSessions.get(key);
+  if (existing) {
+    existing.lastUsed = Date.now();
+    translatedZenSessions.delete(key);
+    translatedZenSessions.set(key, existing);
+    return existing.sessionId;
+  }
+  const id = generateSessionId();
+  if (translatedZenSessions.size >= MAX_TRANSLATED_SESSIONS) {
+    translatedZenSessions.delete(translatedZenSessions.keys().next().value);
+  }
+  translatedZenSessions.set(key, { sessionId: id, lastUsed: Date.now() });
+  return id;
 }
 
 function toolNameOf(tool) {
@@ -276,7 +301,7 @@ export class OpenCodeZenExecutor extends DefaultExecutor {
     }
 
     const fallback = this.prepareRequestCredentials({ credentials });
-    headers[SESSION_HEADER] = fallback[SESSION_FIELD];
+    headers[SESSION_HEADER] = fallback[SESSION_FIELD] || generateSessionId();
     return headers;
   }
 

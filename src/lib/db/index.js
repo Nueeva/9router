@@ -1,3 +1,5 @@
+import { keyAccessFromColumns, keyAccessToColumns, validateKeyAccessInput } from "@/shared/utils/keyAccess.js";
+import { KEY_ACCESS_UNRESTRICTED } from "@/shared/constants/keyAccess.js";
 // Public API barrel - all DB functions
 import { getAdapter } from "./driver.js";
 import { stringifyJson, parseJson } from "./helpers/jsonCol.js";
@@ -117,6 +119,7 @@ export async function exportDb(options = null) {
       systemPrompt: r.systemPrompt || "",
       permissions: r.permissions || "",
       createdBy: r.createdBy || "",
+      access: keyAccessFromColumns(r.accessRestricted, r.accessAllow),
     }));
   }
   if (isIncluded("combos")) {
@@ -260,7 +263,7 @@ export async function importDb(payload) {
         const createdBy = k.createdBy !== undefined ? k.createdBy : (prev.createdBy || "");
 
         db.run(
-          `INSERT OR REPLACE INTO apiKeys(id, key, name, machineId, isActive, createdAt, tokenLimit, usedTokens, resetInterval, lastResetAt, allowedModels, rpmLimit, tpmLimit, ipWhitelist, expiresAt, systemPrompt, permissions, createdBy) VALUES(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+          `INSERT OR REPLACE INTO apiKeys(id, key, name, machineId, isActive, createdAt, tokenLimit, usedTokens, resetInterval, lastResetAt, allowedModels, rpmLimit, tpmLimit, ipWhitelist, expiresAt, systemPrompt, permissions, createdBy, accessRestricted, accessAllow) VALUES(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
           [
             k.id,
             k.key,
@@ -280,6 +283,8 @@ export async function importDb(payload) {
             systemPrompt,
             permissions,
             createdBy,
+            keyAccessToColumns(k.access !== undefined && validateKeyAccessInput(k.access).ok ? validateKeyAccessInput(k.access).value : KEY_ACCESS_UNRESTRICTED).accessRestricted,
+            keyAccessToColumns(k.access !== undefined && validateKeyAccessInput(k.access).ok ? validateKeyAccessInput(k.access).value : KEY_ACCESS_UNRESTRICTED).accessAllow,
           ]
         );
       }
@@ -507,7 +512,7 @@ export async function importDbProgressive(payload, onProgress) {
         const createdBy = k.createdBy !== undefined ? k.createdBy : (prev.createdBy || "");
 
         db.run(
-          `INSERT OR REPLACE INTO apiKeys(id, key, name, machineId, isActive, createdAt, tokenLimit, usedTokens, resetInterval, lastResetAt, allowedModels, rpmLimit, tpmLimit, ipWhitelist, expiresAt, systemPrompt, permissions, createdBy) VALUES(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+          `INSERT OR REPLACE INTO apiKeys(id, key, name, machineId, isActive, createdAt, tokenLimit, usedTokens, resetInterval, lastResetAt, allowedModels, rpmLimit, tpmLimit, ipWhitelist, expiresAt, systemPrompt, permissions, createdBy, accessRestricted, accessAllow) VALUES(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
           [
             k.id,
             k.key,
@@ -527,6 +532,8 @@ export async function importDbProgressive(payload, onProgress) {
             systemPrompt,
             permissions,
             createdBy,
+            keyAccessToColumns(k.access !== undefined && validateKeyAccessInput(k.access).ok ? validateKeyAccessInput(k.access).value : KEY_ACCESS_UNRESTRICTED).accessRestricted,
+            keyAccessToColumns(k.access !== undefined && validateKeyAccessInput(k.access).ok ? validateKeyAccessInput(k.access).value : KEY_ACCESS_UNRESTRICTED).accessAllow,
           ]
         );
       }

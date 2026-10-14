@@ -42,7 +42,10 @@ const nextConfig = {
   // letter). That throw happens at module scope, so every consumer of `open` dies on
   // import - including xAI/Grok token refresh, which loads the OAuth service that imports
   // it. Keeping it external preserves the real `import.meta.url` at runtime.
-  serverExternalPackages: ["better-sqlite3", "sql.js", "node:sqlite", "bun:sqlite", "open"],
+  // @aws-sdk/credential-providers must stay external for the same class of reason: it reads
+  // ~/.aws/config and the SSO token cache from disk at runtime and resolves its credential
+  // plugins by dynamic require, neither of which survives bundling.
+  serverExternalPackages: ["better-sqlite3", "sql.js", "node:sqlite", "bun:sqlite", "open", "@aws-sdk/credential-providers"],
   turbopack: {
     root: tracingRoot
   },
@@ -67,7 +70,7 @@ const nextConfig = {
     },
     // Next 14 reads this key (top-level serverExternalPackages is Next 15+ and
     // ignored with a warning). Keep both so the db adapters stay external.
-    serverComponentsExternalPackages: ["better-sqlite3", "sql.js", "node:sqlite", "bun:sqlite", "open"],
+    serverComponentsExternalPackages: ["better-sqlite3", "sql.js", "node:sqlite", "bun:sqlite", "open", "@aws-sdk/credential-providers"],
     // #1529/#1572: LLM clients can send long context or base64 image payloads through /v1 rewrites.
     proxyClientMaxBodySize,
     // Cache fetch responses across HMR refreshes for faster dev reloads.

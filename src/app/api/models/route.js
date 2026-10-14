@@ -204,6 +204,7 @@ export async function GET() {
       if (csEnabled && names.some((n) => csModels.has(n))) {
         caps.contextSqueezer = true;
       }
+      const pluginMarks = applyPluginMarks(caps, names);
       models.push({
         provider: s.provider,
         model: s.callName,

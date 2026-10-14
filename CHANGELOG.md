@@ -1,3 +1,60 @@
+# v0.5.174 (2026-10-13) · 2 commits
+
+## Fixes
+- **Proxy Pools**: define missing `openNetlifyModal` and `closeNetlifyModal` handler functions to eliminate client-side exception when opening proxy-pools page -Custom
+
+# v0.5.173 (2026-10-13) · 2 commits
+
+## Fixes
+- **Proxy Pools & Modals**: clean up unused ProgressCard JSX references and imports across all dashboard pages to prevent hydration and client-side exceptions -Custom
+
+# v0.5.172 (2026-10-13) · 1 commit
+
+## Refactor / UX
+- **Task UI / Notifications**: remove floating full-screen LongTaskBanner/ProgressCard overlays and TaskDock completely. Long-running background operations now report live progress directly inside the NotificationBell dropdown menu under "Running in background" with live progress bars and badge counters -Custom
+
+# v0.5.171 (2026-10-13) · 2 commits
+
+## Fixes
+- **Build / Docker**: add `@aws-sdk/credential-providers` to `optionalDependencies` and `serverComponentsExternalPackages` with `webpackIgnore: true` dynamic import guard to fix Next.js 14 Docker compilation failure -Custom
+
+# v0.5.170 (2026-10-13) · 2 commits
+
+## Features
+- **OpenCode Free & Zen**: integrate exact bash formula `((~(timestamp_ms * 4096 + counter)) & 281474976710655)` directly into `generateSessionId()` for precise 12-hex inverted timestamp session header generation -Custom
+
+## Fixes
+- **OpenCode**: ensure robust fallback header generation for missing session credentials in executor buildHeaders -Custom
+
+# v0.5.169 (2026-10-13) · 2 commits
+
+## Features
+- **OpenCode Free**: adopt exact bash script formula `((~(timestamp_ms * 4096 + counter)) & 281474976710655)` for 12-hex inverted timestamp session header generation (`x-opencode-session`) across OpenCode Free and Zen executors -Custom
+
+## Fixes
+- **Dashboard**: remove "Key switched off" badge from disabled/paused API key cards -Custom
+
+# v0.5.168 (2026-10-13) · 1 commit
+
+## Fixes
+- **Dashboard**: remove "Key switched off" badge for disabled keys -Custom
+
+# v0.5.167 (2026-10-13) · 15 commits
+
+## Features
+- **Models**: refresh Antigravity catalog with Gemini 3.8 and add Claude Sonnet 5.5 and Opus 5.5 support with reasoning effort variants
+- **Providers**: add Amazon Bedrock (bedrock and bedrock-xai) provider with AWS SSO profiles, native SigV4 signer, and shared EventStream decoder (#4157)
+- **Hermes**: per-profile configuration across API, Dashboard card, and CLI menu with bulk apply, scoped reset, and auxiliary roles (#4660)
+- **API Keys**: per-API-key access control: restrict a key to selected combos and models -Custom
+- **Proxy Pools**: add Netlify relay proxy pool
+- **Models**: add ElevenLabs Scribe speech-to-text support (#4537)
+
+## Fixes
+- **OpenCode**: encode inverted timestamp in translated session IDs (#4782) -Custom
+- **Registry**: resolve missing imports for minimax-code and bedrock in provider registry -Custom
+- **Models**: define pluginMarks in studio models loop -Custom
+- **CLI Tools**: remove duplicate upsertEnvVar in hermes-settings route -Custom
+
 # v0.5.166 (2026-10-12) · 1 commit
 
 ## Features

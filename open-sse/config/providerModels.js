@@ -1,4 +1,3 @@
-import { PROVIDERS } from "./providers.js";
 import REGISTRY from "../providers/registry/index.js";
 // PROVIDER_MODELS now built from providers/registry (transport + models co-located)
 import { PROVIDER_MODELS } from "../providers/index.js";
@@ -122,7 +121,7 @@ export const OAUTH_ALIASES = Object.fromEntries(
 
 // Derived from PROVIDERS - no need to maintain manually
 export const PROVIDER_ID_TO_ALIAS = Object.fromEntries(
-  Object.keys(PROVIDERS).map(id => [id, OAUTH_ALIASES[id] || id])
+  REGISTRY.map(r => [r.id, r.alias || r.id])
 );
 
 export function getModelsByProviderId(providerId) {

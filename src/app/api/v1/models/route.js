@@ -10,6 +10,7 @@ import { getProviderConnections, getCombos, getCustomModels, getModelAliases, ge
 import { getAllowedModelsOfKey, matchesAllowedModels } from "@/lib/db/repos/apiKeysRepo.js";
 import { getDisabledModels } from "@/lib/disabledModelsDb";
 import { buildStudioTargetIndex } from "@/shared/utils/studioModelVisibility";
+import { getKeyAccessContext, filterModelsListForKey } from "@/sse/services/keyAccess.js";
 import { resolveKiroModels } from "open-sse/services/kiroModels.js";
 import { resolveKimchiModels } from "open-sse/services/kimchiModels.js";
 import { resolveQoderModels, routableQoderModels } from "open-sse/services/qoderModels.js";
@@ -727,7 +728,11 @@ export async function GET(request) {
   try {
     // Detect cross-instance recursive /models fetch (another 9router fetching our /models)
     const skipDynamicFetch = request?.headers?.get(INTERNAL_MODELS_FETCH_HEADER) === "1";
-    const data = await buildModelsList([LLM_KIND], { skipDynamicFetch, request });
+    const rawData = await buildModelsList([LLM_KIND], { skipDynamicFetch, request });
+    const data = await filterModelsListForKey(
+      await getKeyAccessContext(request),
+      rawData
+    );
     return Response.json({ object: "list", data }, {
       headers: { "Access-Control-Allow-Origin": "*" },
     });

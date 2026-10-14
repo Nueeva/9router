@@ -3,6 +3,7 @@ import { deleteApiKey, getApiKeyById, getApiKeys, updateApiKey } from "@/lib/loc
 import { getSessionContext, DEFAULT_PERMISSIONS } from "@/lib/auth/dashboardPermissions";
 import { recordSecurityEvent } from "@/lib/db/repos/securityLogRepo";
 import { parseAllowedModels, matchesAllowedModels } from "@/lib/db/repos/apiKeysRepo";
+import { validateKeyAccessInput } from "@/shared/utils/keyAccess.js";
 
 // GET /api/keys/[id] - Get single key
 export async function GET(request, { params }) {
@@ -36,7 +37,7 @@ export async function PUT(request, { params }) {
     }
 
     const body = await request.json();
-    const { isActive } = body;
+    const { isActive, access } = body;
 
     const existing = await getApiKeyById(id);
     if (!existing) {
@@ -72,7 +73,6 @@ export async function PUT(request, { params }) {
     if (body.lastResetAt !== undefined) updateData.lastResetAt = body.lastResetAt;
     if (body.systemPrompt !== undefined) updateData.systemPrompt = body.systemPrompt;
 
-    // Fields subject to scoping when edited by API key user
     if (body.tokenLimit !== undefined) {
       let limit = Number(body.tokenLimit);
       if (ctx.session?.role === "apikey") {
@@ -96,7 +96,6 @@ export async function PUT(request, { params }) {
             const filtered = requestedList.filter(m => matchesAllowedModels(creatorPatterns, m));
             allowed = filtered.length ? filtered.join(",") : creatorPatterns.join(",");
           } else {
-            // Wildcard or empty request is clamped to the creator's own scope.
             allowed = creatorPatterns.join(",");
           }
         }
@@ -105,9 +104,6 @@ export async function PUT(request, { params }) {
     }
     if (body.permissions !== undefined) {
       if (ctx.session?.role === "apikey") {
-        // Same rule as creation: a key-authenticated session never edits permissions,
-        // it can only land the sub-key on the default. Sending the field at all is
-        // not an error, it just cannot move the value.
         updateData.permissions = DEFAULT_PERMISSIONS;
       } else {
         updateData.permissions = body.permissions;
@@ -118,6 +114,12 @@ export async function PUT(request, { params }) {
     if (body.tpmLimit !== undefined) updateData.tpmLimit = Number(body.tpmLimit);
     if (body.ipWhitelist !== undefined) updateData.ipWhitelist = body.ipWhitelist;
     if (body.expiresAt !== undefined) updateData.expiresAt = body.expiresAt || null;
+
+    if (access !== undefined) {
+      const checked = validateKeyAccessInput(access);
+      if (!checked.ok) return NextResponse.json({ error: checked.error }, { status: 400 });
+      updateData.access = checked.value;
+    }
 
     const updated = await updateApiKey(id, updateData);
     return NextResponse.json({ key: updated });

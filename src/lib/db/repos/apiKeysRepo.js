@@ -1,3 +1,5 @@
+import { keyAccessFromColumns, keyAccessToColumns } from "@/shared/utils/keyAccess.js";
+import { KEY_ACCESS_UNRESTRICTED } from "@/shared/constants/keyAccess.js";
 import { v4 as uuidv4 } from "uuid";
 import { getAdapter } from "../driver.js";
 import { DEFAULT_PERMISSIONS } from "@/lib/auth/permissionPaths";
@@ -40,6 +42,7 @@ function rowToKey(row) {
     systemPrompt: row.systemPrompt || "",
     permissions: parsePermissions(row.permissions),
     createdBy: row.createdBy || "",
+    access: keyAccessFromColumns(row.accessRestricted, row.accessAllow),
   };
 }
 
@@ -92,7 +95,7 @@ export async function createApiKey(name, machineId, options = {}) {
   };
   const permStr = typeof options.permissions === "string" ? options.permissions : JSON.stringify(apiKey.permissions);
   db.run(
-    `INSERT INTO apiKeys(id, key, name, machineId, isActive, createdAt, tokenLimit, usedTokens, resetInterval, lastResetAt, allowedModels, rpmLimit, tpmLimit, ipWhitelist, expiresAt, systemPrompt, permissions, createdBy) VALUES(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+    `INSERT INTO apiKeys(id, key, name, machineId, isActive, createdAt, tokenLimit, usedTokens, resetInterval, lastResetAt, allowedModels, rpmLimit, tpmLimit, ipWhitelist, expiresAt, systemPrompt, permissions, createdBy, accessRestricted, accessAllow) VALUES(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
     [
       apiKey.id,
       apiKey.key,
@@ -112,6 +115,8 @@ export async function createApiKey(name, machineId, options = {}) {
       apiKey.systemPrompt,
       permStr,
       apiKey.createdBy,
+      keyAccessToColumns(options.access || KEY_ACCESS_UNRESTRICTED).accessRestricted,
+      keyAccessToColumns(options.access || KEY_ACCESS_UNRESTRICTED).accessAllow,
     ]
   );
   return apiKey;
@@ -126,7 +131,7 @@ export async function updateApiKey(id, data) {
     const merged = { ...rowToKey(row), ...data };
     const permStr = typeof merged.permissions === "string" ? merged.permissions : JSON.stringify(merged.permissions || {});
     db.run(
-      `UPDATE apiKeys SET key = ?, name = ?, machineId = ?, isActive = ?, tokenLimit = ?, usedTokens = ?, resetInterval = ?, lastResetAt = ?, allowedModels = ?, rpmLimit = ?, tpmLimit = ?, ipWhitelist = ?, expiresAt = ?, systemPrompt = ?, permissions = ?, createdBy = ? WHERE id = ?`,
+      `UPDATE apiKeys SET key = ?, name = ?, machineId = ?, isActive = ?, tokenLimit = ?, usedTokens = ?, resetInterval = ?, lastResetAt = ?, allowedModels = ?, rpmLimit = ?, tpmLimit = ?, ipWhitelist = ?, expiresAt = ?, systemPrompt = ?, permissions = ?, createdBy = ?, accessRestricted = ?, accessAllow = ? WHERE id = ?`,
       [
         merged.key,
         merged.name,
@@ -144,6 +149,8 @@ export async function updateApiKey(id, data) {
         merged.systemPrompt || "",
         permStr,
         merged.createdBy || "",
+        keyAccessToColumns(merged.access || KEY_ACCESS_UNRESTRICTED).accessRestricted,
+        keyAccessToColumns(merged.access || KEY_ACCESS_UNRESTRICTED).accessAllow,
         id,
       ]
     );
