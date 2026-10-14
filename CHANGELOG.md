@@ -1,3 +1,8 @@
+# v0.5.174 (2026-10-13) · 2 commits
+
+## Fixes
+- **Proxy Pools**: define missing `openNetlifyModal` and `closeNetlifyModal` handler functions to eliminate client-side exception when opening proxy-pools page -Custom
+
 # v0.5.173 (2026-10-13) · 2 commits
 
 ## Fixes

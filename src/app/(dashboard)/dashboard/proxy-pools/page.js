@@ -627,6 +627,15 @@ export default function ProxyPoolsPage() {
     setShowDenoModal(false);
   };
 
+  const openNetlifyModal = () => {
+    setNetlifyForm({ netlifyToken: "", siteName: "netlify-relay" });
+    setShowNetlifyModal(true);
+  };
+
+  const closeNetlifyModal = () => {
+    setShowNetlifyModal(false);
+  };
+
   // Relay deploys are one long request each (the provider builds, uploads, and
   // reports ready). The dialog closes the moment the request starts and the run
   // belongs to the server, so closing the browser during a minute-long deploy
