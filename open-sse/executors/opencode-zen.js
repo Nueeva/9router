@@ -61,20 +61,22 @@ export function generateRequestId(timestamp = Date.now()) {
   return `msg_${time}${unstableRandom()}`;
 }
 
+// Upstream Zen validates the 12-hex prefix as a recent inverted timestamp
+// (~(BigInt(Date.now()) * 4096n + counter)); a SHA-256 derived prefix 403s with
+// FreeTierError. Mint a real session and reuse it per identity so retries don't
+// burn the per-session free-tier quota.
+const translatedZenSessions = new Map();
 export function translateSessionId(sessionId, clientTool = "") {
   if (typeof sessionId === "string" && OPENCODE_SESSION_RE.test(sessionId.trim())) {
     return sessionId.trim();
   }
-  const digest = crypto
-    .createHash("sha256")
-    .update(`opencode\0${clientTool || "generic"}\0${sessionId || ""}`)
-    .digest();
-  const timeHex = digest.subarray(0, 6).toString("hex");
-  let randomPart = "";
-  for (let i = 6; i < 20; i++) {
-    randomPart += BASE62_CHARS[digest[i] % 62];
-  }
-  return `ses_${timeHex}${randomPart}`;
+  const key = `${sessionId || ""}|${clientTool || ""}`;
+  const cached = translatedZenSessions.get(key);
+  if (cached) return cached;
+  const minted = generateSessionId();
+  if (translatedZenSessions.size >= 1000) translatedZenSessions.clear();
+  translatedZenSessions.set(key, minted);
+  return minted;
 }
 
 function toolNameOf(tool) {

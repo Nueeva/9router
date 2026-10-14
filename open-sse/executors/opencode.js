@@ -77,20 +77,23 @@ export function generateRequestId(timestamp = Date.now()) {
   return `msg_${time}${unstableRandom()}`;
 }
 
+// Upstream Zen validates that the 12-hex prefix decodes to a recent inverted
+// timestamp (~(BigInt(Date.now()) * 4096n + counter)). A SHA-256 derived prefix
+// fails that check and every request 403s with FreeTierError, so mint a real
+// session instead. Cache per downstream identity so retries reuse one session
+// (fresh sessions per request burn the per-session free-tier quota -> 429).
+const translatedOpencodeSessions = new Map();
 export function translateSessionId(sessionId, clientTool = "") {
   if (typeof sessionId === "string" && OPENCODE_SESSION_RE.test(sessionId.trim())) {
     return sessionId.trim();
   }
-  const digest = crypto
-    .createHash("sha256")
-    .update(`opencode\0${clientTool || "generic"}\0${sessionId || ""}`)
-    .digest();
-  const timeHex = digest.subarray(0, 6).toString("hex");
-  let randomPart = "";
-  for (let i = 6; i < 20; i++) {
-    randomPart += BASE62_CHARS[digest[i] % 62];
-  }
-  return `ses_${timeHex}${randomPart}`;
+  const key = `${sessionId || ""}|${clientTool || ""}`;
+  const cached = translatedOpencodeSessions.get(key);
+  if (cached) return cached;
+  const minted = generateSessionId();
+  if (translatedOpencodeSessions.size >= 1000) translatedOpencodeSessions.clear();
+  translatedOpencodeSessions.set(key, minted);
+  return minted;
 }
 
 function normalizeSession(value) {
