@@ -27,7 +27,6 @@ import BulkEditKeys from "./components/BulkEditKeys";
 import StatusAlert from "./components/StatusAlert";
 import Tooltip from "./components/Tooltip";
 import SecurityWarning from "./components/SecurityWarning";
-import KeyAccessControls from "./components/KeyAccessControls";
 
 function formatTokensNumber(num) {
   if (!num || num <= 0) return "0";
@@ -149,7 +148,6 @@ function generateSnippet(lang, apiKey, baseUrl) {
   if (lang === "go") return `package main\n\nimport (\n\t"bytes"\n\t"fmt"\n\t"io"\n\t"net/http"\n)\n\nfunc main() {\n\tbody := []byte(\`{"model":"${model}","messages":[{"role":"user","content":"Hello"}]}\`)\n\treq, _ := http.NewRequest("POST", "${url}", bytes.NewBuffer(body))\n\treq.Header.Set("Authorization", "Bearer ${apiKey}")\n\treq.Header.Set("Content-Type", "application/json")\n\tresp, _ := http.DefaultClient.Do(req)\n\tdefer resp.Body.Close()\n\tb, _ := io.ReadAll(resp.Body)\n\tfmt.Println(string(b))\n}`;
   return "";
 }
-
 
 export default function APIPageClient({ machineId }) {
   const [keys, setKeys] = useState([]);
@@ -1045,24 +1043,6 @@ const scopedModelPatterns =
     });
   };
 
-  // Save a key's access (restricted flag + allow list).
-  const handleUpdateKeyAccess = async (id, access) => {
-    try {
-      const res = await fetch(`/api/keys/${id}`, {
-        method: "PUT",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ access }),
-      });
-      const data = await res.json().catch(() => ({}));
-      if (res.ok && data.key) {
-        setKeys(prev => prev.map(k => k.id === id ? { ...k, access: data.key.access } : k));
-      } else {
-        console.log("Error updating key access:", data.error || res.status);
-      }
-    } catch (error) {
-      console.log("Error updating key access:", error);
-    }
-  };
   const maskKey = (fullKey) => {
     if (!fullKey || fullKey.length <= 10) return fullKey || "";
     return fullKey.slice(0, 6) + "•".repeat(fullKey.length - 10) + fullKey.slice(-4);
@@ -1477,19 +1457,6 @@ const scopedModelPatterns =
                       </span>
                     )}
                   </div>
-
-                  <KeyAccessControls
-                    apiKey={key}
-                    onChange={(access) => handleUpdateKeyAccess(key.id, access)}
-                    onRequestRestrict={() => setConfirmState({
-                      title: "Restrict API Key",
-                      message: `Restrict API key "${key.name}"?\n\nIt will only be able to call the combos and models you add. Until you add one, it can call nothing.`,
-                      onConfirm: async () => {
-                        setConfirmState(null);
-                        handleUpdateKeyAccess(key.id, { restricted: true, allow: key.access?.allow || [] });
-                      }
-                    })}
-                  />
                 </div>
                 <div className="flex flex-shrink-0 items-center gap-1.5">
                   <div

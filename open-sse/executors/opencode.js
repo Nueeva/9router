@@ -78,13 +78,13 @@ export function generateRequestId(timestamp = Date.now()) {
   return `msg_${time}${unstableRandom()}`;
 }
 
-const translatedOpencodeSessions = new Map();
+const translatedSessions = new Map();
 const MAX_TRANSLATED_SESSIONS = 1000;
 const translatedSessionCleanup = setInterval(() => {
   const now = Date.now();
-  for (const [key, entry] of translatedOpencodeSessions) {
+  for (const [key, entry] of translatedSessions) {
     if (now - entry.lastUsed > MEMORY_CONFIG.sessionTtlMs) {
-      translatedOpencodeSessions.delete(key);
+      translatedSessions.delete(key);
     }
   }
 }, MEMORY_CONFIG.sessionCleanupIntervalMs);
@@ -95,18 +95,18 @@ export function translateSessionId(sessionId, clientTool = "") {
     return sessionId.trim();
   }
   const key = `opencode:ses:${clientTool || "generic"}:${sessionId || ""}`;
-  const existing = translatedOpencodeSessions.get(key);
+  const existing = translatedSessions.get(key);
   if (existing) {
     existing.lastUsed = Date.now();
-    translatedOpencodeSessions.delete(key);
-    translatedOpencodeSessions.set(key, existing);
+    translatedSessions.delete(key);
+    translatedSessions.set(key, existing);
     return existing.sessionId;
   }
   const id = generateSessionId();
-  if (translatedOpencodeSessions.size >= MAX_TRANSLATED_SESSIONS) {
-    translatedOpencodeSessions.delete(translatedOpencodeSessions.keys().next().value);
+  if (translatedSessions.size >= MAX_TRANSLATED_SESSIONS) {
+    translatedSessions.delete(translatedSessions.keys().next().value);
   }
-  translatedOpencodeSessions.set(key, { sessionId: id, lastUsed: Date.now() });
+  translatedSessions.set(key, { sessionId: id, lastUsed: Date.now() });
   return id;
 }
 

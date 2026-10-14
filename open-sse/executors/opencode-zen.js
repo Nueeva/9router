@@ -1,3 +1,4 @@
+import { MEMORY_CONFIG } from "../config/runtimeConfig.js";
 import crypto from "node:crypto";
 import { DefaultExecutor } from "./default.js";
 import { resolveSessionId } from "../utils/sessionManager.js";
@@ -8,7 +9,6 @@ import {
   coerceResponsesArguments,
   coerceResponsesOutput,
 } from "../translator/formats/responsesApi.js";
-import { MEMORY_CONFIG } from "../config/runtimeConfig.js";
 
 const SESSION_HEADER = "x-opencode-session";
 const SESSION_FIELD = "_opencodeZenSession";
@@ -72,35 +72,35 @@ export function generateRequestId(timestamp = Date.now()) {
   return `msg_${time}${unstableRandom()}`;
 }
 
-const translatedZenSessions = new Map();
+const translatedSessions = new Map();
 const MAX_TRANSLATED_SESSIONS = 1000;
-const translatedZenSessionCleanup = setInterval(() => {
+const translatedSessionCleanup = setInterval(() => {
   const now = Date.now();
-  for (const [key, entry] of translatedZenSessions) {
-    if (now - entry.lastUsed > (MEMORY_CONFIG?.sessionTtlMs || 1800000)) {
-      translatedZenSessions.delete(key);
+  for (const [key, entry] of translatedSessions) {
+    if (now - entry.lastUsed > MEMORY_CONFIG.sessionTtlMs) {
+      translatedSessions.delete(key);
     }
   }
-}, MEMORY_CONFIG?.sessionCleanupIntervalMs || 300000);
-if (translatedZenSessionCleanup.unref) translatedZenSessionCleanup.unref();
+}, MEMORY_CONFIG.sessionCleanupIntervalMs);
+if (translatedSessionCleanup.unref) translatedSessionCleanup.unref();
 
 export function translateSessionId(sessionId, clientTool = "") {
   if (typeof sessionId === "string" && OPENCODE_SESSION_RE.test(sessionId.trim())) {
     return sessionId.trim();
   }
   const key = `opencode-zen:ses:${clientTool || "generic"}:${sessionId || ""}`;
-  const existing = translatedZenSessions.get(key);
+  const existing = translatedSessions.get(key);
   if (existing) {
     existing.lastUsed = Date.now();
-    translatedZenSessions.delete(key);
-    translatedZenSessions.set(key, existing);
+    translatedSessions.delete(key);
+    translatedSessions.set(key, existing);
     return existing.sessionId;
   }
   const id = generateSessionId();
-  if (translatedZenSessions.size >= MAX_TRANSLATED_SESSIONS) {
-    translatedZenSessions.delete(translatedZenSessions.keys().next().value);
+  if (translatedSessions.size >= MAX_TRANSLATED_SESSIONS) {
+    translatedSessions.delete(translatedSessions.keys().next().value);
   }
-  translatedZenSessions.set(key, { sessionId: id, lastUsed: Date.now() });
+  translatedSessions.set(key, { sessionId: id, lastUsed: Date.now() });
   return id;
 }
 
