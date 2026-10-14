@@ -504,6 +504,12 @@ export const PATTERN_CAPABILITIES = [
   // ── Others ───────────────────────────────────────────────────────
   { pattern: "*hunyuan*",       caps: { reasoning: true, thinkingFormat: "hunyuan", contextWindow: 262144, maxOutput: 262144 } },
   { pattern: "hy3*",            caps: { reasoning: true, thinkingFormat: "hunyuan", contextWindow: 262144, maxOutput: 262144 } },
+  // Step-5 is a 1M window, not the 128k the generic StepFun pattern assumes.
+  // Measured against the live endpoint: 594k accepted, 1.58M rejected with
+  // "This endpoint's maximum context length is 1000000 tokens". models.dev
+  // agrees (step-5-preview / step-5-preview-free limit.context = 1000000), so
+  // this exact-family pattern must sit before the generic "*step-*" one.
+  { pattern: "*step-5*",        caps: { reasoning: true, thinkingFormat: "step", contextWindow: 1000000 } },
   { pattern: "*step-*",         caps: { reasoning: true, thinkingFormat: "step", contextWindow: 128000 } },
   { pattern: "*nemotron*",      caps: { reasoning: true, contextWindow: 128000 } },
   { pattern: "*ling-*",         caps: { reasoning: true, contextWindow: 128000 } },
