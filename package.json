@@ -1,6 +1,6 @@
 {
   "name": "9router-app",
-  "version": "0.5.174",
+  "version": "0.5.175",
   "description": "9Router web dashboard",
   "private": true,
   "scripts": {
@@ -79,5 +79,5 @@
   "optionalDependencies": {
     "@aws-sdk/credential-providers": "^3.1135.0"
   },
-  "comment_aws_sdk_credential_providers": "kept in optionalDependencies (npm still installs these by default) and imported lazily in shared/awsCredentials.js \u2014 only AWS Bedrock connections using profile/SSO mode need it; static accessKeyId/secretAccessKey connections never load it"
+  "comment_aws_sdk_credential_providers": "kept in optionalDependencies (npm still installs these by default) and imported lazily in shared/awsCredentials.js - only AWS Bedrock connections using profile/SSO mode need it; static accessKeyId/secretAccessKey connections never load it"
 }
