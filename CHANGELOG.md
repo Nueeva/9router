@@ -10,6 +10,20 @@
 - **OpenCode Free & Zen**: implement PR #4782 session translation cache & inverted timestamp generator (`translateSessionId`) across both `opencode.js` and `opencode-zen.js` to ensure generated sessions carry valid descending timestamp headers and prevent 403 FreeTierError -Custom
 
 # v0.5.167 (2026-10-14) · 1 commit
+# v0.5.173 (2026-10-14) · 1 commit
+
+## What's Added?
+- **Gemini Web sync with gemini-web2api-go**: model table now matches the upstream server list - gemini-3.6-flash, 3.5-flash-lite, 3.1-pro, 3.8-flash (3.7 kept as alias), 4-argon, plus -thinking variants for each. Selection goes through the model header the server actually reads, extended thinking is switched via inner slot 80 plus header slot 15, and responses surface reasoning_content -Custom
+- **OpenAI tool calling for Gemini Web and Kimi Web**: both previously answered 400 "does not support OpenAI function tools". Tools are now encoded into the prompt and recovered from the reply as standard tool_calls, following the proven application-level pattern, so agents get working function calls instead of an error -Custom
+- **Shared web-cookie tool bridge**: new webCookieToolBridge module encoding the OpenAI tools array into the prompt (with tool_choice none/auto/required/forced honored) and parsing model replies back into tool_calls, with tolerant JSON recovery for lenient model output -Custom
+
+## What Was Fixed?
+- **Gemini Web model mismatch**: requests previously carried no model selector at all, so everything silently landed on 3.5 Flash-Lite regardless of the chosen model
+- **Gemini Web fingerprint**: Chrome 146 desktop user agent and browser headers replace the previous Linux-box string, matching the reference client
+- **Gemini Web session auth**: XSRF token handling and SAPISIDHASH authorization corrected per the captured browser flow, so signed-in cookies stop getting blanket 400s
+- **Gemini Web response cleanup**: code-execution artifacts are stripped from replies instead of leaking raw markers, without ever returning an empty answer for math/code turns
+- **Kimi Web tool turns**: assistant tool_calls and tool results fold into readable transcript lines, so multi-step agent loops stay coherent instead of throwing
+
 # v0.5.172 (2026-10-14) · 1 commit
 
 ## What Was Deleted?
