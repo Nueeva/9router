@@ -10,6 +10,17 @@
 - **OpenCode Free & Zen**: implement PR #4782 session translation cache & inverted timestamp generator (`translateSessionId`) across both `opencode.js` and `opencode-zen.js` to ensure generated sessions carry valid descending timestamp headers and prevent 403 FreeTierError -Custom
 
 # v0.5.167 (2026-10-14) · 1 commit
+# v0.5.174 (2026-10-14) · 1 commit
+
+## What Was Fixed?
+- **"The operation was aborted due to timeout" on Gemini Web model tests**: the probe budget was a flat 15 seconds, but the web endpoint answers a warmed-up probe in 13-50 seconds, so nearly every model reported as broken - including argon, which passes comfortably when given room. Web-cookie providers (Gemini Web, Kimi Web, DeepSeek Web, Xiaomi MiMo) now get a 90-second probe; REST providers keep failing fast at 15s -Custom
+- **Gemini Web session fetch cost**: every request re-downloaded the 800KB /app page for its session token, which alone took 30-60s. The session is now cached for 10 minutes and re-fetched once only when the server rejects the token, cutting warm requests from ~90s to seconds -Custom
+- **Gemini Web model tests fired in parallel**: "Test all models" fan-out all probes at once, but Google queues per account, so the probes timed out behind each other. Web-cookie providers now probe serially -Custom
+- **Misleading Gemini errors**: empty upstream replies said "cookie may be expired", which sent perfectly good __Secure-1PSID cookies through a re-copy dance. The message now states what actually happened (no content in N bytes) -Custom
+
+## What's Under the Hood?
+- Probe timeout became per-provider via exported WEB_COOKIE_PROVIDERS set, covered by a unit test -Custom
+
 # v0.5.173 (2026-10-14) · 1 commit
 
 ## What's Added?

@@ -324,7 +324,24 @@ export function parseStreamReasoning(raw) {
   return cleanGeminiText(best);
 }
 
-async function fetchSessionParams(cookie) {
+/**
+ * Session cache.
+ *
+ * `/app` answers with ~800KB of HTML and takes 30-60s from this box; without a
+ * cache every single request pays that, and a "Test all models" run - which
+ * fires one execute per model - serialises into timeouts even though each
+ * individual model answers in 13-48s. The `at` token is a per-session XSRF
+ * value, so it is safe to reuse until it is rejected; on rejection execute()
+ * passes force=true to re-fetch once.
+ */
+const SESSION_TTL_MS = 10 * 60 * 1000;
+const sessionCache = new Map(); // cookie -> { at, bl, expiresAt }
+
+async function fetchSessionParams(cookie, force = false) {
+  const hit = sessionCache.get(cookie);
+  const now = Date.now();
+  if (!force && hit && hit.expiresAt > now) return { at: hit.at, bl: hit.bl };
+
   const res = await fetch(GEMINI_URL, {
     headers: {
       Cookie: cookie,
@@ -338,7 +355,9 @@ async function fetchSessionParams(cookie) {
   const m = html.match(/"SNlM0e":"([^"]+)"/) || html.match(/SNlM0e\\?":\\?"([^"\\]+)/);
   const bl = html.match(/"cfb2h":"([^"]+)"/) || html.match(/cfb2h\\?":\\?"([^"\\]+)/);
   if (!m) return null;
-  return { at: m[1], bl: bl ? bl[1] : DEFAULT_BL };
+  const session = { at: m[1], bl: bl ? bl[1] : DEFAULT_BL };
+  sessionCache.set(cookie, { ...session, expiresAt: Date.now() + SESSION_TTL_MS });
+  return session;
 }
 
 function browserHeaders(cookie) {
@@ -520,8 +539,15 @@ export class GeminiWebExecutor extends BaseExecutor {
     const responseText = parseStreamResponse(raw);
     const reasoning = parseStreamReasoning(raw);
     if (!responseText) {
+      // Upstream answered 200 but the body arrived empty or unreadable. Say so
+      // plainly: the previous message blamed the cookie, which sent people
+      // re-copying a perfectly good __Secure-1PSID.
+      log?.error?.("GEMINI-WEB", `Empty upstream body (${raw.length} bytes) for ${modelId}`);
       return {
-        response: errorResponse(502, "No response from Gemini (cookie may be expired or the web endpoint changed)"),
+        response: errorResponse(
+          502,
+          `Gemini returned no content for ${modelId} (${raw.length} bytes received). The web endpoint is slow from here - retry, or use a model with a shorter queue.`
+        ),
         url: GEMINI_URL,
         headers: {},
         transformedBody: body,
