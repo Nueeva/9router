@@ -390,6 +390,54 @@ function errorResponse(status, message) {
   );
 }
 
+/**
+ * Read the Bard stream to completion - or to the first parseable answer.
+ *
+ * StreamGenerate is chunked and Google frequently never closes it: the probe
+ * above showed a 186-byte handshake frame, then 45s of silence, then a byte,
+ * with the connection staying open. `res.text()` waits for close and hangs
+ * forever, which is why so many models "timed out" while the same request
+ * succeeds minutes later. So we read incrementally and stop the moment the
+ * accumulated buffer parses into a real answer, with two guard rails: 30s of
+ * silence after the last byte, and a hard 150s ceiling (measured replies on this
+ * box run 4-45s, but the same prompt has been observed at 108s).
+ */
+async function readGeminiStream(res, externalSignal) {
+  if (!res.body) return "";
+  const reader = res.body.getReader();
+  const decoder = new TextDecoder();
+  let buf = "";
+  let chunks = 0;
+  const t0 = Date.now();
+  const HARD_MS = 150000;
+  const IDLE_MS = 30000;
+  let lastData = Date.now();
+  let gotFirst = false;
+  try {
+    while (true) {
+      if (externalSignal?.aborted) break;
+      const elapsed = Date.now() - t0;
+      if (elapsed > HARD_MS) break;
+      if (gotFirst && Date.now() - lastData > IDLE_MS) break;
+      const r = await reader.read();
+      if (r.done) break;
+      chunks++;
+      lastData = Date.now();
+      gotFirst = true;
+      buf += decoder.decode(r.value, { stream: true });
+      // Stop on the first frame that carries an actual answer. Partial frames
+      // do not parse (parseStreamResponse walks complete wrb.fr lines), so a
+      // successful parse here means the reply is complete enough to return.
+      if (parseStreamResponse(buf)) break;
+    }
+  } catch {
+    // Timeout/abort below: whatever accumulated is what we can use.
+  } finally {
+    try { reader.cancel(); } catch {}
+  }
+  return buf;
+}
+
 export class GeminiWebExecutor extends BaseExecutor {
   constructor() {
     super("gemini-web", { baseUrl: GEMINI_URL });
@@ -535,7 +583,7 @@ export class GeminiWebExecutor extends BaseExecutor {
       };
     }
 
-    const raw = await upstream.text().catch(() => "");
+    const raw = await readGeminiStream(upstream, signal);
     const responseText = parseStreamResponse(raw);
     const reasoning = parseStreamReasoning(raw);
     if (!responseText) {

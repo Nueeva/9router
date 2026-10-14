@@ -6,23 +6,10 @@ import { getConsistentMachineId } from "@/shared/utils/machineId";
 
 const CLI_TOKEN_SALT = "9r-cli-auth";
 
-/**
- * Per-provider probe budget.
- *
- * Cookie-based web providers (gemini-web, kimi-web, ...) answer a probe in
- * 13-50s once warmed up - the web endpoint queues requests per account - so a
- * flat 15s budget turns a working provider into "The operation was aborted due
- * to timeout" for every model. REST providers keep the snappy default so a
- * dead endpoint still fails fast.
- */
-export const WEB_COOKIE_PROVIDERS = new Set(["gemini-web", "kimi-web", "deepseek-web", "xiaomi-mimo"]);
-const PROBE_TIMEOUT_MS = 15000;
-const WEB_COOKIE_PROBE_TIMEOUT_MS = 90000;
-
-function probeTimeoutMs(model) {
-  const provider = String(model).split("/")[0];
-  return WEB_COOKIE_PROVIDERS.has(provider) ? WEB_COOKIE_PROBE_TIMEOUT_MS : PROBE_TIMEOUT_MS;
-}
+// Probe budgets live next to this file (not behind a @/ alias) so unit tests
+// can import them without the alias resolver.
+import { WEB_COOKIE_PROVIDERS, probeTimeoutMs } from "./probeBudget.js";
+export { WEB_COOKIE_PROVIDERS, probeTimeoutMs };
 
 function createSilentWavFile() {
   const sampleRate = 16000;

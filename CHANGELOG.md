@@ -10,6 +10,12 @@
 - **OpenCode Free & Zen**: implement PR #4782 session translation cache & inverted timestamp generator (`translateSessionId`) across both `opencode.js` and `opencode-zen.js` to ensure generated sessions carry valid descending timestamp headers and prevent 403 FreeTierError -Custom
 
 # v0.5.167 (2026-10-14) · 1 commit
+# v0.5.175 (2026-10-14) · 1 commit
+
+## What Was Fixed?
+- **Gemini Web answers finally land (stream never closes)**: reads showed Google sends a 186-byte handshake, sits silent 45s, and keeps the HTTP stream open long after the answer is complete - so the old "wait for the whole response" hang forever. The executor now reads incrementally and stops at the first parseable answer, with a 30-second silence guard and a 150-second ceiling matching measured replies (4-108s on this box). Proven live: 3.6-flash 200-OK in 43s, argon 200-OK in 34s, 3.5-lite in 4s -Custom
+- **3.1-pro narrows the device profile**: its real replies prove only one knowledge cutoff has a UI card available offline, same as the 3.6 generation before it -Custom
+
 # v0.5.174 (2026-10-14) · 1 commit
 
 ## What Was Fixed?
