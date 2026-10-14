@@ -30,6 +30,10 @@ const ANTIGRAVITY_TRANSIENT_ERROR_PATTERNS = [
   /timeout/i,
   /stream\s+(ended|closed|terminated|interrupted)/i,
   /empty\s+response/i,
+  // Google intermittently rejects requests from a given egress IP with this
+  // FAILED_PRECONDITION 400. It is IP/region-edge specific and clears on retry
+  // (a fresh connection/edge node usually succeeds), so treat it as transient.
+  /user\s+location\s+is\s+not\s+supported/i,
 ];
 
 const ANTIGRAVITY_TRANSIENT_STATUSES = new Set([
