@@ -10,9 +10,11 @@
 - **OpenCode Free & Zen**: implement PR #4782 session translation cache & inverted timestamp generator (`translateSessionId`) across both `opencode.js` and `opencode-zen.js` to ensure generated sessions carry valid descending timestamp headers and prevent 403 FreeTierError -Custom
 
 # v0.5.167 (2026-10-14) · 1 commit
+# v0.5.169 (2026-10-14) · 3 commits
 
 ## Features
 - **OpenCode Free & Zen**: integrate exact bash formula `((~(timestamp_ms * 4096 + counter)) & 281474976710655)` into `generateSessionId()` for canonical 12-hex descending inverted timestamp session header (`x-opencode-session`) generation (PR #4782) -Custom
+- **OpenCode Free & Zen**: implement PR #4782 session translation cache & inverted timestamp generator (`translateSessionId`) across both `opencode.js` and `opencode-zen.js` to ensure generated sessions carry valid descending timestamp headers and prevent 403 FreeTierError -Custom
 
 ## Fixes
 - **Proxy Pools**: define missing `openNetlifyModal` and `closeNetlifyModal` handler functions to eliminate client-side exception when opening proxy-pools page -Custom
@@ -68,6 +70,8 @@
 - **Registry**: resolve missing imports for minimax-code and bedrock in provider registry -Custom
 - **Models**: define pluginMarks in studio models loop -Custom
 - **CLI Tools**: remove duplicate upsertEnvVar in hermes-settings route -Custom
+- **OpenCode**: ensure robust fallback header generation for missing session credentials in executor `buildHeaders` -Custom
+- **Endpoint Keys UI**: remove the "Key switched off" text badge from the inactive API key card in `EndpointPageClient.js` - the toggle switch already communicates the off state, the extra label was visual noise -Custom
 
 # v0.5.166 (2026-10-12) · 1 commit
 
