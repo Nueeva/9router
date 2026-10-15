@@ -1,17 +1,22 @@
+# v0.5.181 (2026-10-15) · 1 commit
+
+### Features
+- **Update Banner**: Restyle update notification banner with modern glassmorphism glow, amber/gold accent badge, and responsive flex layout for mobile and desktop -Custom
+
 # v0.5.180 (2026-10-15) · 1 commit
 
 ### Fixes
-- **Proxy Pools**: Tangani status HTTP 407 (Proxy Authentication Required) saat proxy pool expired atau auth ditolak agar request tidak lolos tanpa terdeteksi.
-- **Proxy Pools**: Nonaktifkan 375 entri proxy mati/expired dari database pool untuk mencegah fallback tak terkendali ke IP VPS yang menyebabkan HTTP 429 (Rate Limit).
+- **Proxy Pools**: Handle HTTP 407 (Proxy Authentication Required) when proxy pool credentials are expired or rejected so requests are not silently passed through.
+- **Proxy Pools**: Deactivate 375 dead/expired proxy entries from the database pool to prevent uncontrolled fallback to VPS IP causing HTTP 429 (Rate Limit).
 
 # v0.5.179 (2026-10-15) · 2 commits
 
 ### Fixes
-- **OpenCode Free**: Terapkan patch terbaru PR #4840 (`f2f74a77`) untuk mencegah 403 `FreeTierError` pada testing dari browser / dashboard:
-  - Perbaiki validasi User-Agent agar regex tidak false-positive pada token browser (misal `Mozilla/5.0`) sehingga User-Agent selalu di-spoof ke `opencode/latest/2.0.29/cli`.
-  - Terjemahkan dan simpan cache session ID non-native ke format canonical inverted timestamp 12-hex agar lolos validasi upstream.
-  - Guard fallback session header dan pastikan header `anthropic-version` terpasang pada model pesan.
-- **OpenCode Fingerprint**: Normalisasi alias `bash` / `Bash` ke tool canonical `shell` lengkap dengan skema parameter resmi OpenCode.
+- **OpenCode Free**: Apply latest PR #4840 patch (`f2f74a77`) to prevent 403 `FreeTierError` when testing from browser / dashboard:
+  - Fix User-Agent validation so the regex does not false-positive on browser tokens (e.g. `Mozilla/5.0`), ensuring UA is always spoofed to `opencode/latest/2.0.29/cli`.
+  - Translate and cache non-native session IDs into canonical inverted-timestamp 12-hex format to pass upstream validation.
+  - Guard session header fallback and ensure `anthropic-version` header is attached for messages models.
+- **OpenCode Fingerprint**: Normalize `bash` / `Bash` tool alias to canonical `shell` with official OpenCode parameter schema.
 
 # v0.5.178 (2026-10-14) · 1 commit
 
