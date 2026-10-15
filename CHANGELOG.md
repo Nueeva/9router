@@ -1,3 +1,9 @@
+# v0.5.180 (2026-10-15) · 1 commit
+
+### Fixes
+- **Proxy Pools**: Tangani status HTTP 407 (Proxy Authentication Required) saat proxy pool expired atau auth ditolak agar request tidak lolos tanpa terdeteksi.
+- **Proxy Pools**: Nonaktifkan 375 entri proxy mati/expired dari database pool untuk mencegah fallback tak terkendali ke IP VPS yang menyebabkan HTTP 429 (Rate Limit).
+
 # v0.5.179 (2026-10-15) · 2 commits
 
 ### Fixes
