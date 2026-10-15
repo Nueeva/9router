@@ -1,9 +1,28 @@
-# v0.5.174 (2026-10-13) · 2 commits
+# v0.5.179 (2026-10-15) · 2 commits
+
+### Fixes
+- **OpenCode Free**: Terapkan patch terbaru PR #4840 (`f2f74a77`) untuk mencegah 403 `FreeTierError` pada testing dari browser / dashboard:
+  - Perbaiki validasi User-Agent agar regex tidak false-positive pada token browser (misal `Mozilla/5.0`) sehingga User-Agent selalu di-spoof ke `opencode/latest/2.0.29/cli`.
+  - Terjemahkan dan simpan cache session ID non-native ke format canonical inverted timestamp 12-hex agar lolos validasi upstream.
+  - Guard fallback session header dan pastikan header `anthropic-version` terpasang pada model pesan.
+- **OpenCode Fingerprint**: Normalisasi alias `bash` / `Bash` ke tool canonical `shell` lengkap dengan skema parameter resmi OpenCode.
+
+# v0.5.178 (2026-10-14) · 1 commit
+
+## What Was Fixed?
+- **OpenCode Free big-pickle removed & forced Bearer public**: big-pickle was retired from OpenCode free tier and returned 403 FreeTierError during provider tests. Dropped big-pickle from free model filters and ensured upstream Authorization header always uses "Bearer public" without leaking 9router user API keys -Custom
+
+# v0.5.177 (2026-10-14) · 1 commit
+
+## What Was Fixed?
+- **OpenCode Free 403 FreeTierError bypassed**: upstream v2.0.29 updated its anti-abuse gate, migrating free-tier endpoints to `/inference/v1/...`, enforcing official client UAs (`opencode/latest/2.0.29/cli`), requiring canonical tool fingerprints (`read` and `shell`), and sending `x-opencode-session-id`, `x-session-affinity`, `x-session-id`, and `x-opencode-project: global`. Verified live with cat-jam-free, nemotron-3.5-lightning-free, and longcat-2.5-preview-free returning 200 OK -Custom
+
 # v0.5.176 (2026-10-14) · 1 commit
 
-## Fixes
-- **Endpoint Keys UI**: remove the "Key switched off" text badge from the inactive API key card in `EndpointPageClient.js` - the toggle switch already communicates the off state, the extra label was visual noise -Custom
+## What Was Deleted?
+- **9Remote link from navigation sidebar**: removed external link to 9remote.cc from the dashboard sidebar menu -Custom
 
+# v0.5.174 (2026-10-13) · 2 commits
 # v0.5.175 (2026-10-14) · 1 commit
 
 ## Features
