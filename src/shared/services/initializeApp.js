@@ -125,6 +125,12 @@ async function runHeavyStartup() {
   import("@/sse/services/backgroundTokenRefresh.js")
     .then(({ startBackgroundTokenRefresh }) => startBackgroundTokenRefresh())
     .catch((e) => console.log("[BackgroundTokenRefresh] scheduler start failed:", e.message));
+
+  // Proactive provider health probing (Firefly-style circuit breaker). Idempotent
+  // and also started from custom-server.js when that entry is used.
+  import("@/sse/services/backgroundProviderHealth.js")
+    .then(({ startBackgroundProviderHealth }) => startBackgroundProviderHealth())
+    .catch((e) => console.log("[BackgroundProviderHealth] scheduler start failed:", e.message));
 }
 
 function hasQuotaAutoPingEnabled(settings) {

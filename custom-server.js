@@ -14,6 +14,7 @@ const PEER_TOKEN = crypto.randomBytes(24).toString("hex");
 process.env.NINEROUTER_PEER_TOKEN = PEER_TOKEN;
 
 let backgroundRefreshStarted = false;
+let backgroundProviderHealthStarted = false;
 
 // Arm the automatic-backup scheduler as soon as the HTTP server is listening.
 // The Next-side bootstrap also starts it, but only when a page render runs;
@@ -71,6 +72,37 @@ function startBackgroundTokenRefreshFromCustomServer() {
       // Expected in published CLI standalone (src/ not on disk). App bootstrap covers it.
       if (process.env.DEBUG_BACKGROUND_TOKEN_REFRESH) {
         console.error("[BackgroundTokenRefresh] import failed:", e && e.message ? e.message : e);
+      }
+    });
+}
+
+function startBackgroundProviderHealthFromCustomServer() {
+  if (backgroundProviderHealthStarted) return;
+  backgroundProviderHealthStarted = true;
+  // Prefer source path (repo / standalone that still has src). Fail-open if missing
+  // - initializeApp also starts the same scheduler when the Next app boots.
+  const modPath = path.join(__dirname, "src", "sse", "services", "backgroundProviderHealth.js");
+  import(pathToFileURL(modPath).href)
+    .then((m) => {
+      try {
+        m.startBackgroundProviderHealth();
+      } catch (e) {
+        console.error("[BackgroundProviderHealth] start failed:", e && e.message ? e.message : e);
+      }
+      const stop = () => {
+        try {
+          m.stopBackgroundProviderHealth();
+        } catch {
+          /* ignore */
+        }
+      };
+      process.once("SIGINT", stop);
+      process.once("SIGTERM", stop);
+    })
+    .catch((e) => {
+      // Expected in published CLI standalone (src/ not on disk). App bootstrap covers it.
+      if (process.env.DEBUG_BACKGROUND_PROVIDER_HEALTH) {
+        console.error("[BackgroundProviderHealth] import failed:", e && e.message ? e.message : e);
       }
     });
 }
@@ -412,6 +444,7 @@ http.createServer = (...args) => {
   const server = origCreate(...rest, wrapped);
   server.once("listening", () => {
     startBackgroundTokenRefreshFromCustomServer();
+    startBackgroundProviderHealthFromCustomServer();
     startAutoBackupFromCustomServer();
   });
   const origEmit = server.emit;
