@@ -7,6 +7,7 @@ import LanguageSwitcher from "@/shared/components/LanguageSwitcher";
 import SettingsHistory from "@/shared/components/SettingsHistory";
 import { cn } from "@/shared/utils/cn";
 import { useSessionStore } from "@/store/sessionStore";
+import { useTaskStore } from "@/store/taskStore";
 import { APP_CONFIG } from "@/shared/constants/config";
 import { LOCALE_COOKIE, normalizeLocale } from "@/i18n/config";
 import { LOCALE_FLAGS } from "@/shared/constants/locales";
@@ -139,6 +140,46 @@ export default function ProfilePage() {
   // Progress overlay state. `busy` holds { title, message, section, progress };
   // ProgressCard from the shared Loading module renders it directly.
   const [busy, setBusy] = useState(null);
+  const profileTaskRef = useRef(null);
+
+  // Sync busy progress card with the bell notification task store
+  useEffect(() => {
+    if (busy) {
+      const taskId = "profile-backup-task";
+      profileTaskRef.current = taskId;
+      const pct = typeof busy.progress === "number" && Number.isFinite(busy.progress)
+        ? Math.min(100, Math.max(0, Math.round(busy.progress <= 1 ? busy.progress * 100 : busy.progress)))
+        : 0;
+      const taskData = {
+        id: taskId,
+        title: busy.title || "Backup Operation",
+        message: busy.message || "Working",
+        progress: pct,
+        href: "/dashboard/profile",
+      };
+      const existing = useTaskStore.getState().tasks.find((t) => t.id === taskId);
+      if (!existing || existing.state === "done") {
+        useTaskStore.getState().start(taskData);
+      } else {
+        useTaskStore.getState().update(taskId, {
+          title: taskData.title,
+          message: taskData.message,
+          progress: taskData.progress,
+        });
+      }
+    } else if (profileTaskRef.current) {
+      useTaskStore.getState().finish(profileTaskRef.current);
+      profileTaskRef.current = null;
+    }
+  }, [busy]);
+
+  useEffect(() => {
+    return () => {
+      if (profileTaskRef.current) {
+        useTaskStore.getState().finish(profileTaskRef.current);
+      }
+    };
+  }, []);
   const [proxyForm, setProxyForm] = useState({
     outboundProxyEnabled: false,
     outboundProxyUrl: "",

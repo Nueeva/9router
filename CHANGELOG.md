@@ -1,3 +1,36 @@
+# v0.5.202 (2026-10-17) · 2 commits
+
+## What Was Fixed
+
+- **OpenCode Free & Zen executors**: Synchronized 100% with Decolua master upstream (open-sse executors, registry, fingerprint definitions, and test suites). Restored official upstream session aliases, headers, and test specifications.
+
+# v0.5.201 (2026-10-17) · 2 commits
+
+## What Was Fixed
+
+- **OpenCode Free & Zen executors**: Pruned redundant and unused tracking headers (`x-opencode-project`, `x-opencode-session-id`, `x-session-affinity`, `x-session-id`) across OpenCode free-tier requests to align strictly with upstream CLI behavior and prevent fingerprint mismatches.
+
+# v0.5.200 (2026-10-17) · 2 commits
+
+## What Was Fixed
+
+- **OpenCode Free & Zen executors**: Aligned `opencode.js` and `opencode-zen.js` with Decolua v2 CLI fingerprinting and PR #4860 routing. Free-tier models are routed to `/inference/v1`, obsolete `x-opencode-request` header is removed to eliminate 403 `FreeTierError`, bitmask session ID generation with pinned counters is synchronized, and verbatim `read`/`shell` schemas are enforced.
+
+# v0.5.199 (2026-10-17) · 2 commits
+
+## What Was Fixed
+
+- **OpenCode Free tier header alignment**: Updated OpenCode executors, registry, and catalog sync routes to default `x-opencode-client` to `cli`, enforce `x-opencode-project: global`, session affinity headers, and set `Accept: text/event-stream` across free-tier inference paths.
+
+# v0.5.198 (2026-10-17) · 2 commits
+
+## What's New
+
+- **All dashboard loading flows consolidated into the notification bell**: Every long-running operation in the dashboard is now wired to the central task store instead of living only as isolated or floating corner widgets:
+  - Provider batch tests ("Test All" for OAuth, Free tier, API key, and individual provider connections) now surface in the bell with live status, running indicator, and a 30s Completed row.
+  - Profile database and backup actions (export database, import database with progress tracking, saving auto-backup configuration, and test backups) now sync directly to the notification bell.
+  - Bulk import dialogs (Codex accounts, Grok CLI accounts, and multi-key API key imports) register with the bell task store so progress and completion are announced globally across the app.
+
 # v0.5.197 (2026-10-16) · 2 commits
 
 ## What's New
