@@ -1,3 +1,167 @@
+# v0.5.197 (2026-10-16) · 2 commits
+
+## What's New
+
+- **Model import shows in the notification bell**: "Importing models" was a
+  local dialog that lived only on the provider page, so closing the tab lost
+  the run and nothing else in the dashboard knew it existed. It now registers
+  as a long task like every other operation - visible in the bell while it
+  runs, with a Completed row when it ends.
+
+## What Was Fixed
+
+- **"Fetching model list" no longer hangs**: the model-list endpoint talked to
+  the provider with no timeout at all, so a stalled upstream left the dashboard
+  spinning for minutes with no error. Every outbound read now races a fixed
+  20-second budget, custom resolvers included, and a timeout answers plainly
+  instead of looking like a crash. The browser also stops waiting on its own
+  request after 20 seconds.
+
+
+# v0.5.196 (2026-10-16) · 2 commits
+
+## What Was Fixed
+
+- **Dismiss control on task rows**: the running-work rows in the bell ("Running
+  in background" / "Completed") had no remove button while notice rows did.
+  Every task row now carries its own X. A store-backed row retires through the
+  store so it stays gone; a row for a run whose page is closed is hidden for
+  that run only.
+
+
+# v0.5.195 (2026-10-16) · 2 commits
+
+## What's New
+
+- **Finished runs stay visible in the bell**: a completed long task keeps its
+  row for 30 seconds, marked `Completed` in green, before it retires itself -
+  so a finished import is announced instead of vanishing silently.
+- **A green dot on the bell**: while any operation is running, a small green
+  dot sits on the bell icon (top right), clear of the unread badge, so the
+  work in flight is known without opening the panel.
+- **Per-notice controls**: every notice row carries two buttons - mark as read
+  (check) and remove (trash). The existing "Mark all read" header action is
+  unchanged, and removing keeps the dedupe row so a condition that is still
+  true is announced again.
+
+
+# v0.5.194 (2026-10-16) · 2 commits
+
+## What Was Fixed
+
+- **Change Log categories show their colors again**: the reader-facing
+  headings this fork writes (`What's New`, `What Changed`, `What Was Fixed`,
+  `What Was Removed`, `What Was Undone`) were missing from the category map,
+  so every pill fell back to the same grey. Each one now maps to its colored
+  category with its own icon.
+- **Change Log icons no longer blank**: every category and bullet icon is now
+  a glyph the shipped icon subset carries, verified against the subset list.
+- **Change Log shell follows the theme**: the modal frame, tab switcher and
+  close button used raw black/white washes; they now use the same theme tokens
+  as the notification bell.
+
+# v0.5.193 (2026-10-16) · 2 commits
+
+## What Was Fixed
+
+- **Prompt Injection page in English**: every Indonesian label, helper text,
+  empty state and guide panel on the AI Gateway Prompt Injection page is now
+  English, matching the rest of the dashboard. The Bahasa Indonesia persona
+  template keeps forcing Indonesian output, but its own name and description
+  are English.
+
+# v0.5.192 (2026-10-16) · 2 commits
+
+## What Was Removed
+
+- **Floating task dock**: the newest long task used to take a full-screen
+  overlay and older ones stacked as cards in the bottom-right corner, covering
+  the page being worked on. `TaskDock.js` is deleted and the layout no longer
+  mounts it.
+
+## What Changed
+
+- **Live tasks live in the notification bell**: every long operation already
+  reported into the task store, which the bell reads through `NotifToast`.
+  With the dock gone the bell is the single place progress appears, and its
+  badge keeps counting running tasks after notices are read.
+- **Bell rows go back to the run's owner**: store tasks now carry the page
+  driving them, so picking a row opens that page when it is no longer open.
+
+# v0.5.191 (2026-10-16) · 4 commits
+
+## What's New
+
+- **AI Gateway Prompt Injection** (PR #8, by SatriaDivo): gateway rules that
+  prepend, append or override system and user prompts across combos, models
+  (wildcards supported) or all traffic, with per-key restriction, keyword and
+  regex triggers, dynamic templating and a dashboard simulator, applied to
+  live chat requests fail-open behind the feature flag -Custom
+
+## What Was Fixed
+
+- **PR #8 test**: its own suite called `extractUserText` without importing
+  it (12/13 green); one-line import added, now 13/13 -Custom
+
+# v0.5.190 (2026-10-16) · 1 commit
+
+## What Was Undone
+
+- **Compare Models restored**: the original view is back, undoing the task 6
+  redesign on request. The `.arena-sticky` CSS block the redesign introduced
+  goes with it, since nothing references it any more.
+
+# v0.5.189 (2026-10-16) · 1 commit
+
+## What Was Fixed
+
+- **Compare Models composer in glass**: the pinned band carried an opaque
+  `#0b0e14` plate that buried the aurora behind it. It now uses the same frost
+  and blur as the sidebar, so the composer follows the active theme. An audit
+  of the arena page found no other hardcoded colour - every class is a theme
+  token. (Undone by the v0.5.190 revert.)
+
+# v0.5.188 (2026-10-16) · 20 commits
+
+## What Was Removed
+
+- **PRD Builder** is gone from the dashboard: route, sidebar entry and UI removed, with a forward migration that drops its tables on live installs while migration 003 stays in place -Custom
+
+## What's New
+
+- **Update banner** restyled to the welcome banner's card language - header row, accent, action row - keeping version, behind-by and release-notes text -Custom
+- **Compare Models** redesigned as a sticky composer with side-by-side columns, real idle/running/done/error states, proper empty and error states and a stacked mobile layout -Custom (**reverted in v0.5.190** on request; the original view is live)
+- **Custom plugins reach the request**: enabled plugins inject their instruction text into the system prompt with explicit delimiters; no change when nothing is enabled, no duplicate block when enabled twice -Custom
+- **Plugin marks on models**: a model with a custom plugin enabled shows that plugin's mark beside its name, matched by the same rule the request path uses -Custom
+- **Long-task progress** moved into the notification bell as a Tasks section with percent bars; the bell badge counts live tasks, the floating card stays as the transient signal -Custom
+
+## What Changed
+
+- **Add OpenAI Compatible button** is now an opt-in white variant, legible on both dark and glass -Custom
+- **Responsive contract**: PageShell owns page padding, max-width and vertical rhythm, wide tables scroll horizontally instead of clipping, modals scroll internally and the drawer can no longer exceed a phone viewport -Custom
+- **Plugin marks redrawn** to match each plugin's function inside the existing 24x24 drawing language -Custom
+
+# v0.5.187 (2026-10-16) · 2 commits
+
+## What Was Fixed
+
+- **Theme colour audit**: eight colour tokens that four hundred call sites referenced but the theme never declared (`bg-bg-subtle`, `text-text-primary`, `border-border-hover` and five more) are now defined for both dark and glass, so those surfaces finally render -Custom
+- **Themed scrims and panels**: raw `bg-black/NN` overlays, `zinc`/`white` dark-only panels and hex status icons replaced with theme tokens (scrim, surface, danger, success/warning) so modals, banners and cards follow the selected theme -Custom
+
+# v0.5.186 (2026-10-16) · 3 commits
+
+## What's New
+
+- **Design-token contract** landed at `src/shared/styles/chrome.css`: one radius ladder, a three-tier elevation scale, one motion/focus/disabled definition shared by the whole chrome layer -Custom
+
+## What Changed
+
+- **Card / Modal / Drawer / Select / Input / Toggle / Badge / Tooltip / Pagination / SegmentedControl** consume the contract instead of hardcoded radii, shadows and durations, so overlays and surfaces read as one system -Custom
+
+## What Was Fixed
+
+- **Nested modal scroll** is reference-counted in `src/shared/utils/scrollLock.js`; closing an inner dialog no longer re-enables page scroll behind the outer one -Custom
+
 # v0.5.185 (2026-10-15) · 34 commits
 ## Features
 

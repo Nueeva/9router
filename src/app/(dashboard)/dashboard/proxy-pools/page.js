@@ -1,7 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useState, useRef } from "react";
-import { Badge, Button, Card, CardSkeleton, Input, Modal, Pagination, ProgressCard, Toggle, ConfirmModal } from "@/shared/components";
+import { Badge, Button, Card, CardSkeleton, Input, Modal, Pagination, ProgressCard, Toggle, ConfirmModal, PageShell } from "@/shared/components";
 import { useNotificationStore } from "@/store/notificationStore";
 import { useTaskStore } from "@/store/taskStore";
 import {
@@ -41,6 +41,7 @@ const followDashboardJob = async (kind, jobId, { title, pollMs = 1000, onFinal }
     title,
     message: "Starting",
     progress: 0,
+    href: "/dashboard/proxy-pools",
     onCancel: () => cancelDashboardJob(jobId),
   });
   try {
@@ -102,7 +103,11 @@ export default function ProxyPoolsPage() {
   const [netlifyForm, setNetlifyForm] = useState({ netlifyToken: "", projectName: "netlify-relay" });
   const [saving, setSaving] = useState(false);
   const [importing, setImporting] = useState(() =>
-    useTaskStore.getState().tasks.some((t) => t.id === PROXY_IMPORT_TASK)
+    // A finished run lingers in the store marked `done` (see taskStore.finish),
+    // so presence alone no longer means the import is in flight.
+    useTaskStore
+      .getState()
+      .tasks.some((t) => t.id === PROXY_IMPORT_TASK && t.state !== "done")
   );
   const importAbortRef = useRef(null);
   const [deploying, setDeploying] = useState(false);
@@ -547,6 +552,7 @@ export default function ProxyPoolsPage() {
         title: "Importing proxies",
         message: `0/${total} proxies`,
         progress: 0,
+        href: "/dashboard/proxy-pools",
         onCancel: () => cancelProxyImportJob(stored.jobId),
       });
       const final = await pollProxyImportJob(
@@ -604,7 +610,7 @@ export default function ProxyPoolsPage() {
   // kept its own `fixed inset-0` overlay on screen for the whole deploy, and the
   // success path called these closers *while* `deploying` was still true, so
   // `if (deploying) return` turned the close into a no-op and the dialog never
-  // went away. Progress lives in the page's ProgressCard / layout TaskDock.
+  // went away. Progress for the page's own card lives in ProgressCard.
   const closeVercelModal = () => {
     setShowVercelModal(false);
   };
@@ -792,8 +798,8 @@ export default function ProxyPoolsPage() {
     setImporting(true);
     // Close the modal as soon as the run starts. Its `fixed inset-0` overlay
     // used to stay mounted with both buttons disabled and swallowed every click
-    // on the page. Progress reports through the layout's TaskDock, which
-    // survives navigation.
+    // on the page. Progress reports through the task store, which survives
+    // navigation and surfaces in the notification bell.
     setShowBatchImportModal(false);
 
     const total = parsedEntries.length;
@@ -811,6 +817,7 @@ export default function ProxyPoolsPage() {
         title: "Importing proxies",
         message: `0/${total} proxies`,
         progress: 0,
+        href: "/dashboard/proxy-pools",
         onCancel: () => cancelProxyImportJob(jobId),
       });
 
@@ -854,15 +861,15 @@ export default function ProxyPoolsPage() {
 
   if (loading) {
     return (
-      <div className="mx-auto flex w-full max-w-5xl flex-col gap-4 px-1 sm:gap-6 sm:px-0">
+      <PageShell width="reading">
         <CardSkeleton />
         <CardSkeleton />
-      </div>
+      </PageShell>
     );
   }
 
   return (
-    <div className="mx-auto flex w-full max-w-5xl flex-col gap-4 px-1 sm:gap-6 sm:px-0">
+    <PageShell width="reading">
       <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
         <div className="min-w-0">
           <h1 className="text-xl font-semibold sm:text-2xl">Proxy Pools</h1>
@@ -883,13 +890,13 @@ export default function ProxyPoolsPage() {
             </Button>
 
             {showRelayMenu && (
-              <div className="absolute left-0 top-full z-50 mt-1 w-48 rounded-xl border border-black/10 bg-white p-1 shadow-xl dark:border-white/10 dark:bg-zinc-900 sm:left-auto sm:right-0">
+              <div className="absolute left-0 top-full z-50 mt-1 w-48 rounded-xl border border-border bg-surface p-1 shadow-xl sm:left-auto sm:right-0">
                 <button
                   onClick={() => {
                     openCloudflareModal();
                     setShowRelayMenu(false);
                   }}
-                  className="flex w-full items-center gap-2 rounded-lg px-3 py-2 text-sm text-text-main transition-colors hover:bg-black/5 dark:hover:bg-white/5"
+                  className="flex w-full items-center gap-2 rounded-lg px-3 py-2 text-sm text-text-main transition-colors hover:bg-surface-2"
                 >
                   <span className="material-symbols-outlined text-[20px] text-orange-500">cloud</span>
                   Cloudflare Relay
@@ -899,7 +906,7 @@ export default function ProxyPoolsPage() {
                     openVercelModal();
                     setShowRelayMenu(false);
                   }}
-                  className="flex w-full items-center gap-2 rounded-lg px-3 py-2 text-sm text-text-main transition-colors hover:bg-black/5 dark:hover:bg-white/5"
+                  className="flex w-full items-center gap-2 rounded-lg px-3 py-2 text-sm text-text-main transition-colors hover:bg-surface-2"
                 >
                   <span className="material-symbols-outlined text-[20px] text-blue-500">cloud_upload</span>
                   Vercel Relay
@@ -909,7 +916,7 @@ export default function ProxyPoolsPage() {
                     openDenoModal();
                     setShowRelayMenu(false);
                   }}
-                  className="flex w-full items-center gap-2 rounded-lg px-3 py-2 text-sm text-text-main transition-colors hover:bg-black/5 dark:hover:bg-white/5"
+                  className="flex w-full items-center gap-2 rounded-lg px-3 py-2 text-sm text-text-main transition-colors hover:bg-surface-2"
                 >
                   <span className="material-symbols-outlined text-[20px] text-green-500">terminal</span>
                   Deno Relay
@@ -919,7 +926,7 @@ export default function ProxyPoolsPage() {
                     openNetlifyModal();
                     setShowRelayMenu(false);
                   }}
-                  className="flex w-full items-center gap-2 rounded-lg px-3 py-2 text-sm text-text-main transition-colors hover:bg-black/5 dark:hover:bg-white/5"
+                  className="flex w-full items-center gap-2 rounded-lg px-3 py-2 text-sm text-text-main transition-colors hover:bg-surface-2"
                 >
                   <span className="material-symbols-outlined text-[20px] text-teal-500">deployed_code</span>
                   Netlify Relay
@@ -1011,7 +1018,7 @@ export default function ProxyPoolsPage() {
                 className="w-full"
               />
             </div>
-            <div className="flex items-center gap-1 p-1 rounded-lg bg-black/5 dark:bg-white/5">
+            <div className="flex items-center gap-1 p-1 rounded-lg bg-surface-2">
               {[
                 { id: "all", label: "All" },
                 { id: "active", label: "Active" },
@@ -1065,7 +1072,7 @@ export default function ProxyPoolsPage() {
             </Button>
           </div>
         ) : (
-          <div className="flex flex-col divide-y divide-black/[0.04] dark:divide-white/[0.05]">
+          <div className="flex flex-col divide-y divide-border-subtle">
             {visiblePools.map((pool) => (
               <div key={pool.id} className="flex flex-col gap-3 py-3 sm:flex-row sm:items-center sm:justify-between">
                 <div className="flex items-start gap-3 min-w-0 flex-1">
@@ -1120,7 +1127,7 @@ export default function ProxyPoolsPage() {
                   />
                   <button
                     onClick={() => handleTest(pool.id)}
-                    className="p-2 rounded hover:bg-black/5 dark:hover:bg-white/5 text-text-muted hover:text-primary"
+                    className="p-2 rounded hover:bg-surface-2 text-text-muted hover:text-primary"
                     title="Test proxy"
                     disabled={testingId === pool.id}
                   >
@@ -1133,7 +1140,7 @@ export default function ProxyPoolsPage() {
                   </button>
                   <button
                     onClick={() => openEditModal(pool)}
-                    className="p-2 rounded hover:bg-black/5 dark:hover:bg-white/5 text-text-muted hover:text-primary"
+                    className="p-2 rounded hover:bg-surface-2 text-text-muted hover:text-primary"
                     title="Edit"
                   >
                     <span className="material-symbols-outlined text-[18px]">edit</span>
@@ -1181,7 +1188,7 @@ export default function ProxyPoolsPage() {
               value={batchImportText}
               onChange={(e) => setBatchImportText(e.target.value)}
               placeholder={"http://user:pass@127.0.0.1:7897\n127.0.0.1:7897:user:pass"}
-              className="w-full min-h-[180px] py-2 px-3 text-sm text-text-main bg-white dark:bg-white/5 border border-black/10 dark:border-white/10 rounded-md focus:ring-1 focus:ring-primary/30 focus:border-primary/50 focus:outline-none transition-all"
+              className="w-full min-h-[180px] py-2 px-3 text-sm text-text-main bg-surface border border-border dark:bg-white/5 rounded-md focus:ring-1 focus:ring-primary/30 focus:border-primary/50 focus:outline-none transition-all"
             />
             <p className="text-xs text-text-muted mt-1">
               Supported formats: protocol://user:pass@host:port, host:port:user:pass
@@ -1198,8 +1205,9 @@ export default function ProxyPoolsPage() {
           </div>
         </div>
 
-        {/* The import banner lives in the layout's TaskDock so it survives
-            navigation; no second card inside the modal. */}
+        {/* The import banner lives in the task store so it survives
+            navigation and shows in the notification bell; no second card
+            inside the modal. */}
       </Modal>
 
       <Modal
@@ -1320,7 +1328,7 @@ export default function ProxyPoolsPage() {
         onClose={closeDenoModal}
       >
         <div className="flex flex-col gap-4">
-          <div className="rounded-lg bg-black/5 dark:bg-white/5 border border-black/10 dark:border-white/10 p-3 flex flex-col gap-1.5">
+          <div className="rounded-lg bg-surface-2 border border-border p-3 flex flex-col gap-1.5">
             <p className="text-sm text-text-main font-medium">What is Deno Relay?</p>
             <p className="text-xs text-text-muted">
               Forwards all AI provider requests through Deno&apos;s global edge network to mask your real IP.
@@ -1332,7 +1340,7 @@ export default function ProxyPoolsPage() {
               <li>Support up to 20 active apps & 50 custom domains</li>
               <li>Deploy multiple relays for maximum IP diversity</li>
             </ul>
-            <div className="mt-2 pt-2 border-t border-black/10 dark:border-white/10 text-xs text-text-muted">
+            <div className="mt-2 pt-2 border-t border-border text-xs text-text-muted">
               <p className="font-medium text-text-main mb-1">How to generate API token:</p>
               <ol className="list-decimal pl-4 space-y-0.5">
                 <li>Go to <b>console.deno.com</b></li>
@@ -1508,6 +1516,6 @@ export default function ProxyPoolsPage() {
         message={confirmState?.message}
         variant="danger"
       />
-    </div>
+    </PageShell>
   );
 }

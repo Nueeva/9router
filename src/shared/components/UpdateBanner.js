@@ -32,6 +32,23 @@ function readDismissed() {
 }
 
 /**
+ * Version tag. The same chip the welcome dialog sets next to its wordmark:
+ * a bordered mono label in theme tokens, so it survives dark and glass without
+ * a colour of its own.
+ */
+function VersionChip({ children }) {
+  return (
+    <span className="rounded-md border border-border px-1.5 py-0.5 font-mono text-[10px] font-medium tracking-normal text-text-muted">
+      {children}
+    </span>
+  );
+}
+
+VersionChip.propTypes = {
+  children: PropTypes.node,
+};
+
+/**
  * The one place update status lives: every install that sits behind the
  * repository is told about it here, on the dashboard itself.
  *
@@ -44,6 +61,18 @@ function readDismissed() {
  * Driven by /api/version, which reports an update either from git (a checkout
  * that is N commits behind) or from the changelog (a newer release exists), so
  * a deploy without git history is still told to update.
+ *
+ * The card is the welcome dialog's surface, not an alert: same bg-surface fill,
+ * same 1px border-border-subtle edge, same 14px radius, and the header row the
+ * welcome dialog opens with - an icon tile at size-11/rounded-xl, a title in
+ * text-primary, a version chip, one muted line under it - then the actions.
+ * Before this, the banner was an amber-tinted strip (bg-amber-500/10, amber
+ * text, amber hover) which is the one treatment in the dashboard that no theme
+ * token could reach: it sat on top of dark and glass with its own colour and
+ * read as a foreign element. Colour here comes from the tokens alone, exactly
+ * as the welcome dialog's does; the update glyph is the only accent. Same
+ * radius and border as every other panel means it reads as part of the page
+ * instead of an interruption painted over it.
  */
 export default function UpdateBanner({ pollMs = POLL_MS }) {
   // Re-keyed per route below, so the banner briefly exits and re-enters on
@@ -132,6 +161,22 @@ export default function UpdateBanner({ pollMs = POLL_MS }) {
   // closed for this browser.
   const identity = info?.latestVersion || "";
   const visible = Boolean(info) && Boolean(identity) && dismissed !== identity;
+  const latestVersion = formatVersion(info?.latestVersion);
+
+  const handleDismiss = () => {
+    // Animate out first: without this the dismiss is an instant pop
+    // and the content below jumps up with no transition.
+    setClosing(true);
+    setTimeout(() => {
+      try {
+        window.localStorage.setItem(DISMISSED_KEY, identity);
+      } catch {
+        // Storage blocked: the banner simply comes back after a reload.
+      }
+      setDismissed(identity);
+      setClosing(false);
+    }, 200);
+  };
 
   // Keep the update flow reachable even after dismissal: the banner itself can be
   // dismissed, the manual update panel cannot be left without an exit.
@@ -146,63 +191,70 @@ export default function UpdateBanner({ pollMs = POLL_MS }) {
           key={pathname}
           className={`w-full mb-4 ${closing ? "pointer-events-none -translate-y-2 opacity-0 transition-all duration-200 ease-in" : "slide-in-top"}`}
         >
-          <div className="flex flex-col gap-2.5 rounded-xl border border-amber-500/30 bg-amber-500/10 px-4 py-3 sm:flex-row sm:items-center">
-            <span className="material-symbols-outlined shrink-0 text-[20px] text-amber-500">system_update_alt</span>
-            <div className="min-w-0 flex-1">
-              <p className="text-sm font-medium text-amber-600 dark:text-amber-400">
-                {info.behindBy ? `Update available: ${info.behindBy} commit${info.behindBy > 1 ? "s" : ""} behind` : `Update available: ${info.latestVersion}`}
-              </p>
-              <p className="text-xs text-text-muted">{summaryFor(info)}</p>
-              {Array.isArray(info.releaseNotes) && info.releaseNotes.length > 0 && (
-                <ul className="mt-1 space-y-0.5">
-                  {info.releaseNotes.slice(0, 3).map((note) => (
-                    <li key={note} className="truncate text-xs text-text-muted" title={note}>{note}</li>
-                  ))}
-                </ul>
-              )}
-            </div>
-            <div className="flex shrink-0 items-center gap-2">
-              {/* The command stays visible and selectable; copying it is the
-                  job of "Update now" -> "Copy & Shutdown", so a second Copy
-                  button here only offered the same clipboard write twice. */}
-              <code className="hidden select-all overflow-x-auto whitespace-nowrap rounded-lg border border-border-subtle bg-bg px-2.5 py-1.5 font-mono text-[11px] text-text-muted sm:block">
-                {installCmd}
-              </code>
-              <Button
-                variant="primary"
-                size="sm"
-                icon="system_update_alt"
-                onClick={() => setShowConfirm(true)}
-              >
-                Update now
-              </Button>
-              <a href={GITHUB_CONFIG.repoUrl} target="_blank" rel="noopener noreferrer">
-                <Button variant="secondary" size="sm" icon="open_in_new">
-                  GitHub
-                </Button>
-              </a>
+          <div className="rounded-[14px] border border-border-subtle bg-surface px-5 py-4 shadow-[var(--shadow-elev)]">
+            {/* Header: icon tile, title with its version tag, one muted line
+                under it - the welcome dialog's header row with the update
+                glyph where the product mark sits. */}
+            <div className="flex items-start gap-3">
+              <div className="flex size-11 shrink-0 items-center justify-center rounded-xl border border-border-subtle text-primary">
+                <span className="material-symbols-outlined text-[22px]">system_update_alt</span>
+              </div>
+              <div className="min-w-0 flex-1">
+                <p className="flex flex-wrap items-center gap-2 text-lg font-bold tracking-tight leading-tight text-primary">
+                  Update available
+                  {latestVersion && <VersionChip>{latestVersion}</VersionChip>}
+                </p>
+                <p className="mt-0.5 text-xs leading-relaxed text-text-muted">{summaryFor(info)}</p>
+              </div>
               <button
                 type="button"
-                onClick={() => {
-                  // Animate out first: without this the dismiss is an instant pop
-                  // and the content below jumps up with no transition.
-                  setClosing(true);
-                  setTimeout(() => {
-                    try {
-                      window.localStorage.setItem(DISMISSED_KEY, identity);
-                    } catch {
-                      // Storage blocked: the banner simply comes back after a reload.
-                    }
-                    setDismissed(identity);
-                    setClosing(false);
-                  }, 200);
-                }}
-                className="rounded p-1 text-text-muted transition-colors hover:text-amber-500"
+                onClick={handleDismiss}
+                className="-mr-1 shrink-0 rounded p-1 text-text-muted transition-colors hover:text-primary"
                 title="Close"
                 aria-label="Dismiss update notice"
               >
                 <span className="material-symbols-outlined text-[16px]">close</span>
               </button>
+            </div>
+
+            {/* Release notes, listed the way the welcome dialog lists its facts:
+                the card is already the container, so the list needs none of its
+                own, and a note cut mid-word is a note nobody can read. */}
+            {Array.isArray(info.releaseNotes) && info.releaseNotes.length > 0 && (
+              <ul className="mt-3 list-disc space-y-1 pl-5 text-sm text-text-main marker:text-text-muted">
+                {info.releaseNotes.slice(0, 3).map((note) => (
+                  <li key={note} className="leading-relaxed">
+                    {note}
+                  </li>
+                ))}
+              </ul>
+            )}
+
+            {/* Actions, in the welcome dialog's row. The command stays visible
+                and selectable; copying it is the job of "Update now" ->
+                "Copy & Shutdown", so a second Copy button here only offered the
+                same clipboard write twice. */}
+            <div className="mt-4 flex flex-col gap-2 sm:flex-row sm:items-center">
+              <code className="hidden select-all overflow-x-auto whitespace-nowrap rounded-lg border border-border-subtle bg-bg px-2.5 py-1.5 font-mono text-[11px] text-text-muted sm:block">
+                {installCmd}
+              </code>
+              <Button
+                variant="primary"
+                fullWidth
+                className="sm:w-auto"
+                onClick={() => setShowConfirm(true)}
+              >
+                Update now
+              </Button>
+              <a
+                href={GITHUB_CONFIG.repoUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex items-center justify-center gap-1.5 rounded-lg border border-border px-3 py-2 text-sm font-medium text-text-main transition-colors hover:border-primary hover:text-primary"
+              >
+                <span className="material-symbols-outlined text-[16px]">open_in_new</span>
+                GitHub
+              </a>
             </div>
           </div>
         </div>
@@ -223,7 +275,7 @@ export default function UpdateBanner({ pollMs = POLL_MS }) {
       />
 
       {(isDisconnected || isUpdating) && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-sm p-6 fade-in">
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-scrim backdrop-blur-sm p-6 fade-in">
           {isUpdating ? (
             <ManualUpdatePanel
               latestVersion={info.latestVersion}

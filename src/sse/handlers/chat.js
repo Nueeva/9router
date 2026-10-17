@@ -156,6 +156,20 @@ export async function handleChat(request, clientRawRequest = null) {
     } catch { /* studio lookup is best-effort; fall through to the raw name */ }
   }
   const comboModels = await getComboModels(comboEntryName);
+
+  // Apply Gateway Prompt Injections for Combo or Model
+  try {
+    const { applyPromptInjectionsToBody } = await import("@/lib/db/repos/promptInjectionRepo.js");
+    const injectionResult = await applyPromptInjectionsToBody(body, {
+      modelStr,
+      comboName: comboModels ? comboEntryName : "",
+      apiKey,
+    });
+    if (injectionResult.modified) {
+      log.info("CHAT", `[PromptInjection] Applied ${injectionResult.injectedRules.length} rule(s) (${injectionResult.injectedRules.join(", ")}) on "${modelStr}"`);
+    }
+  } catch { /* fail open */ }
+
   if (comboModels) {
     // Check for combo-specific strategy first, fallback to global
     const comboStrategies = settings.comboStrategies || {};
@@ -339,6 +353,20 @@ async function handleSingleModelChat(body, modelStr, clientRawRequest = null, re
    }
   }
  } catch { /* fail open */ }
+
+  // Prompt injection targeting the resolved provider/model
+  try {
+    const { applyPromptInjectionsToBody } = await import("@/lib/db/repos/promptInjectionRepo.js");
+    const injectionResult = await applyPromptInjectionsToBody(body, {
+      modelStr,
+      provider,
+      model: effectiveModel,
+      apiKey,
+    });
+    if (injectionResult.modified) {
+      log.info("CHAT", `[PromptInjection] Applied ${injectionResult.injectedRules.length} rule(s) (${injectionResult.injectedRules.join(", ")}) on "${provider}/${effectiveModel}"`);
+    }
+  } catch { /* fail open */ }
 
   // Routing shown in the unified "▶" line (client model → provider/model)
 

@@ -124,6 +124,8 @@ export async function exportDb(options = null) {
   }
   if (isIncluded("combos")) {
     out.combos = db.all(`SELECT * FROM combos`).map((r) => ({ id: r.id, name: r.name, kind: r.kind, models: parseJson(r.models, []), createdAt: r.createdAt, updatedAt: r.updatedAt }));
+    out.promptInjections = {};
+    for (const r of db.all(`SELECT key, value FROM kv WHERE scope = 'promptInjections'`)) out.promptInjections[r.key] = parseJson(r.value);
   }
   if (isIncluded("usage")) {
     out.usageHistory = db.all(`SELECT * FROM usageHistory ORDER BY id`);
@@ -372,6 +374,13 @@ export async function importDb(payload) {
       db.run(`DELETE FROM kv WHERE scope = 'disabledModels'`);
       for (const [provider, ids] of Object.entries(payload.disabledModels || {})) {
         db.run(`INSERT INTO kv(scope, key, value) VALUES('disabledModels', ?, ?) ON CONFLICT(scope, key) DO UPDATE SET value = excluded.value`, [provider, stringifyJson(ids || [])]);
+      }
+    }
+
+    if (payload.promptInjections !== undefined) {
+      db.run(`DELETE FROM kv WHERE scope = 'promptInjections'`);
+      for (const [key, value] of Object.entries(payload.promptInjections || {})) {
+        db.run(`INSERT OR REPLACE INTO kv(scope, key, value) VALUES('promptInjections', ?, ?)`, [key, stringifyJson(value)]);
       }
     }
 

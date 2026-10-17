@@ -222,7 +222,7 @@ export async function handleChatCore({ body, modelInfo, credentials, log, onCred
   // Expose raw client headers to translators/executors for session-id resolution
   if (credentials) credentials.rawHeaders = clientRawRequest?.headers || {};
 
-  // Execute active custom plugins (Image Vision, Think Deeper, Speed Mode)
+  // Execute every enabled custom plugin for the target model
   let pluginResult = { isVisionActive: false, isThinkDeeperActive: false, isSpeedModeActive: false };
   try {
     pluginResult = await applyCustomPlugins(body, provider, model, sourceFormat, requestedModel);
